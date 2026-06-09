@@ -77,10 +77,8 @@ function _onGeoSuccess(pos) {
 
   updateRadar();
   applyMapHeadingRotation();
-  scheduleCompassRender(true);
+  scheduleCompassRender(firstFix);
   updateGpsLoadingPanel();
-  // Force immediate visual refresh on first GPS fix.
-  if (firstFix) scheduleCompassRender(true);
 }
 
 function _onGeoError(err) {
@@ -232,6 +230,30 @@ function haptic(pattern) {
   if (navigator.vibrate) navigator.vibrate(pattern);
 }
 
+function _getNearestAvailableUniqueForPlayer() {
+  if (!Number.isFinite(playerLat) || !Number.isFinite(playerLng)) {
+    return { availableCount: 0, nearest: null };
+  }
+
+  let availableCount = 0;
+  let nearest = null;
+  for (const t of treasures) {
+    if (!t || t.type !== 'unique') continue;
+    if (t.found_by && t.found_by.length > 0) continue;
+    availableCount += 1;
+
+    const zone = getFlashSearchZone(t);
+    const centerDist = haversine(playerLat, playerLng, zone.centerLat, zone.centerLng);
+    const edgeDist = Math.max(0, centerDist - zone.radiusM);
+
+    if (!nearest || edgeDist < nearest.edgeDist || (edgeDist === nearest.edgeDist && centerDist < nearest.centerDist)) {
+      nearest = { t, zone, centerDist, edgeDist };
+    }
+  }
+
+  return { availableCount, nearest };
+}
+
 function updateRadar() {
   if (playerLat === null) return;
   const bar = document.getElementById('radarBar');
@@ -255,12 +277,9 @@ function updateRadar() {
   const accStr = playerAccuracy ? ` · GPS ±${Math.round(playerAccuracy)}m` : '';
 
   if (activeGameMode === 'unique') {
-    const uniqueLeft = treasures
-      .filter(t => t.type === 'unique')
-      .filter(t => !(t.found_by && t.found_by.length > 0))
-      .filter(t => !(t.found_by && t.found_by.split(',').includes(myPseudo)));
+    const { availableCount, nearest } = _getNearestAvailableUniqueForPlayer();
 
-    if (!uniqueLeft.length) {
+    if (!availableCount || !nearest) {
       const guideText = document.getElementById('modeGuideText');
       if (guideText) guideText.textContent = copy('GUIDE_FLASH_SOUS_ZERO', 'Aucune miniature disponible pour le moment');
       bar.textContent = '';
@@ -274,16 +293,8 @@ function updateRadar() {
       return;
     }
 
-    const nearestU = uniqueLeft
-      .map(t => {
-        const zone = getFlashSearchZone(t);
-        const centerDist = haversine(playerLat, playerLng, zone.centerLat, zone.centerLng);
-        const edgeDist = Math.max(0, centerDist - zone.radiusM);
-        return { t, zone, centerDist, edgeDist };
-      })
-      .sort((a, b) => (a.edgeDist - b.edgeDist) || (a.centerDist - b.centerDist))[0];
-
-    const available = uniqueLeft.length;
+    const nearestU = nearest;
+    const available = availableCount;
     const cStr = available === 1 ? '⚡ 1 trésor dispo' : `⚡ ${available} trésors dispos`;
 
     // Update guide bar count
@@ -326,7 +337,7 @@ function updateRadar() {
   }
 }
 
-function showFlashHint(t, sub, mode) {
+function showFlashHint(t, sub) {
   const hint = document.getElementById('flashHint');
   const photoEl = document.getElementById('flashHintPhoto');
   const subEl = document.getElementById('flashHintSub');
@@ -365,18 +376,7 @@ async function captureUnique() {
   let target = nearestUnique;
   if (!target && playerLat !== null) {
     const accForFlash = Math.max(0, Math.round(playerAccuracy || 0));
-    const uniqueLeft = treasures
-      .filter(t => t.type === 'unique')
-      .filter(t => !(t.found_by && t.found_by.length > 0))
-      .filter(t => !(t.found_by && t.found_by.split(',').includes(myPseudo)));
-    const nearest = uniqueLeft
-      .map(t => {
-        const zone = getFlashSearchZone(t);
-        const centerDist = haversine(playerLat, playerLng, zone.centerLat, zone.centerLng);
-        const edgeDist = Math.max(0, centerDist - zone.radiusM);
-        return { t, zone, centerDist, edgeDist };
-      })
-      .sort((a, b) => (a.edgeDist - b.edgeDist) || (a.centerDist - b.centerDist))[0];
+    const { nearest } = _getNearestAvailableUniqueForPlayer();
     if (nearest) {
       const flashCaptureInM = Math.max(nearest.zone.radiusM, FLASH_CAPTURE_M) + Math.min(12, Math.round(accForFlash * 0.35));
       const stickyForSameTarget = flashCaptureStickyId === nearest.t.id;

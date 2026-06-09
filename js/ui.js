@@ -69,7 +69,6 @@ function showTab(name, btn) {
   }
 }
 
-function toggleMoreMenu() {}
 function _fmtDuration(secs) {
   if (!secs || secs < 0) return '—';
   const m = Math.floor(secs / 60);
@@ -298,7 +297,6 @@ async function inviteFriendsFromCapture() {
   }
 }
 
-function closeMoreMenu() {}
 function showTabFromMore(name) { showTab(name, null); }
 
 // ── Pause ────────────────────────────────────────────

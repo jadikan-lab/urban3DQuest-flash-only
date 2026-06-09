@@ -194,11 +194,8 @@ let accuracyCircle  = null; // GPS accuracy circle on miniMap
 let lastHapticZone  = null;
 let hapticEnabled = localStorage.getItem('u3dq_haptic_enabled') === '1';
 let directionLayers = []; // arrow markers on minimap
-let compassArrowMode = false;
 let mapFollowing = true; // true = map follows GPS, false = user is panning freely
 let lastArrowLat = null, lastArrowLng = null, lastArrowHeading = null; // throttle
-const ARROW_PALETTE = ['#f472b6', '#fb923c', '#22d3ee', '#a78bfa', '#4ade80'];
-const MAX_UNIQUE_ARROWS = 3;
 let myToken = localStorage.getItem('u3dq_token') || ''; // session token for single-session enforcement
 let activeGameMode = 'unique';
 let realtimeEnabled = false;

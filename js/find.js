@@ -24,7 +24,7 @@ function _isTreasureAllowedInActiveScope(treasure) {
   return !!treasure;
 }
 
-async function _tryProcessFindSecure(t, foundCountBefore) {
+async function _tryProcessFindSecure(t) {
   const hasGps = Number.isFinite(playerLat) && Number.isFinite(playerLng);
   const payload = {
     p_pseudo: myPseudo,
@@ -37,11 +37,17 @@ async function _tryProcessFindSecure(t, foundCountBefore) {
 
   const { data, error } = await db.rpc('process_find_secure', payload);
   if (error) {
-    if (_isMissingSecureFindRpcError(error)) return false;
+    if (_isMissingSecureFindRpcError(error)) {
+      _checkinError('Validation serveur indisponible pour le moment. Réessaie dans quelques secondes.');
+      return true;
+    }
     _checkinError('Révélation impossible pour le moment. Réessaie dans quelques secondes.');
     return true;
   }
-  if (!data || !data.status) return false;
+  if (!data || !data.status) {
+    _checkinError('Réponse serveur invalide. Réessaie dans quelques secondes.');
+    return true;
+  }
 
   if (data.status === 'not_found') { _checkinError('Polaroid introuvable — il a peut-être été retiré.'); return true; }
   if (data.status === 'hidden')   { _checkinError('Ce polaroid n\'est pas encore actif.'); return true; }
@@ -79,53 +85,6 @@ async function _tryProcessFindSecure(t, foundCountBefore) {
   return true;
 }
 
-async function _rollbackFoundBy(treasure, previousFoundBy, expectedFoundBy) {
-  const rollbackPayload = {
-    found_by: previousFoundBy,
-    found_at: treasure.found_at || null
-  };
-  const { error } = await db.from('treasures')
-    .update(rollbackPayload)
-    .eq('id', treasure.id)
-    .eq('found_by', expectedFoundBy)
-    .select('id');
-  return !error;
-}
-
-async function _tryGuestUniqueCapture(treasure) {
-  if (myPseudo) return false;
-  if (!treasure || treasure.type !== 'unique') return false;
-
-  const foundList = (treasure.found_by || '').split(',').filter(Boolean);
-  if (foundList.length > 0) {
-    showFoundResult('taken', treasure);
-    return true;
-  }
-
-  const updatePayload = { found_by: 'INVITE', found_at: new Date().toISOString() };
-  const { data: updatedRows, error } = await db.from('treasures')
-    .update(updatePayload)
-    .eq('id', treasure.id)
-    .eq('found_by', '')
-    .select('id');
-
-  if (error || !updatedRows || !updatedRows.length) {
-    showFoundResult('taken', treasure);
-    return true;
-  }
-
-  await loadTreasures();
-  renderMarkers();
-  updateHeader();
-  updateRadar();
-  updateProgressBar();
-
-  haptic([80, 40, 160]);
-  const durationSec = _getUniqueDurationFromLastActivationSec(treasure);
-  showFoundResult('success', treasure, durationSec, null);
-  return true;
-}
-
 async function processFindById(treasureId) {
   if (_processingFind) return;
   if (_inFlightCaptures.has(treasureId)) return;
@@ -140,7 +99,6 @@ async function processFindById(treasureId) {
 }
 
 async function _doProcessFind(treasureId) {
-  const foundCountBefore = myFoundCount;
   // Fetch treasure fresh from DB
   const { data: t, error } = await db.from('treasures').select('*').eq('id', treasureId).single();
   if (error || !t) { _checkinError('Polaroid introuvable — il a peut-être été retiré.'); return; }
@@ -155,7 +113,6 @@ async function _doProcessFind(treasureId) {
   }
 
   if (!myPseudo) {
-    if (await _tryGuestUniqueCapture(t)) return;
     _checkinError('Mode invité : connecte-toi pour révéler des polaroids.');
     return;
   }
@@ -167,64 +124,12 @@ async function _doProcessFind(treasureId) {
   // Unique: check if taken
   if (t.type === 'unique' && foundList.length > 0) { showFoundResult('taken', t); return; }
 
-  // Preferred secure server path; falls back to legacy flow if RPC is not deployed yet.
-  if (await _tryProcessFindSecure(t, foundCountBefore)) return;
-
-  // Server-side dedup: prevents double-write from multi-tab or rapid re-scan
-  const { data: dupEvent } = await db.from('events').select('id').eq('pseudo', myPseudo).eq('treasure_id', t.id).maybeSingle();
-  if (dupEvent) { showFoundResult('already', t); return; }
-
-  const durationSec = _getUniqueDurationFromLastActivationSec(t);
-
-  // Update treasure found_by
-  const newFoundBy = myPseudo;
-  const updatePayload = { found_by: newFoundBy, found_at: new Date().toISOString() };
-  const updateQ = db.from('treasures').update(updatePayload).eq('id', t.id);
-  const { error: updateError, data: updatedRows } = await updateQ.eq('found_by', '').select('id');
-  if (updateError || !updatedRows || !updatedRows.length) {
-    showFoundResult('taken', t);
-    return;
-  }
-
-  // Log event (server now owns score/found_count aggregation)
-  const { error: eventError } = await db.from('events').insert({ pseudo: myPseudo, treasure_id: t.id, treasure_type: t.type, duration_sec: durationSec });
-  if (eventError) {
-    if (eventError.code === '23505') {
-      showFoundResult('already', t);
-      return;
-    }
-    // Keep treasure/events consistency when event insert fails.
-    const rolledBack = await _rollbackFoundBy(t, t.found_by || '', newFoundBy);
-    if (!rolledBack) {
-      _checkinError('Révélation enregistrée partiellement. Réessaie dans quelques secondes.');
-      return;
-    }
-    _checkinError('Révélation impossible pour le moment. Réessaie dans quelques secondes.');
-    return;
-  }
-
-  // Score/found_count are server-managed from events (trigger-side).
-  // Reload local counters from players after event commit.
-  const { data: pFresh } = await db.from('players').select('score,found_count').eq('pseudo', myPseudo).single();
-  if (pFresh) {
-    myScore = pFresh.score || 0;
-    myFoundCount = pFresh.found_count || 0;
-  }
-
-  // Refresh local treasures
-  await loadTreasures();
-  renderMarkers();
-  updateHeader();
-  updateRadar();
-  updateProgressBar();
-
-  // Haptic feedback
-  haptic([80, 40, 160]);
-
-  showFoundResult('success', t, durationSec, null);
+  // Secure server path only (fail closed if unavailable).
+  if (await _tryProcessFindSecure(t)) return;
+  _checkinError('Validation serveur indisponible pour le moment. Réessaie dans quelques secondes.');
 }
 
-function showFoundResult(status, t, durationSec, durationSecHunt) {
+function showFoundResult(status, t, durationSec) {
   if (t && t.type === 'unique' && status !== 'success') {
     const ageMs = Date.now() - (_lastUniqueSuccessModal.at || 0);
     if (_lastUniqueSuccessModal.id === t.id && ageMs < 8000) return;

@@ -25,7 +25,7 @@ async function _fetchLeaderboardData() {
   };
 }
 
-function _computeLeaderboardScores(events, cfg) {
+function _computeLeaderboardScores(events) {
   const totalFixed = 0;
 
   const players = {};
@@ -146,7 +146,7 @@ async function loadLeaderboard() {
   if (!el.dataset.loaded) el.innerHTML = `<p style="color:var(--ink-3);text-align:center;padding:30px">⏳ Chargement…</p>`;
   try {
     const data = await _fetchLeaderboardData();
-    const computed = _computeLeaderboardScores(data.events, data.cfg);
+    const computed = _computeLeaderboardScores(data.events);
     _renderLeaderboard(computed);
   } catch (err) {
     el.innerHTML = `<p style="color:#f87171;text-align:center;padding:40px">⚠️ ${escHtml(err.message)}</p>`;
