@@ -87,8 +87,8 @@ function updateCollectionProgress() {
   const guideText = document.getElementById('modeGuideText');
   if (!guideTitle || !guideText) return;
   const stats = _getFlashCollectionStats();
-  guideTitle.textContent = _uiCopy('GUIDE_FLASH_TITRE', 'Progression');
-  const tpl = _uiCopy('GUIDE_PROGRESS_TEMPLATE', '{R} restantes · {F}/{T} cueillies');
+  guideTitle.textContent = _uiCopy('GUIDE_FLASH_TITRE', '');
+  const tpl = _uiCopy('GUIDE_PROGRESS_TEMPLATE', '{R} miniatures restantes a cueillir ({F}/{T})');
   guideText.textContent = tpl
     .replace('{R}', String(stats.remaining))
     .replace('{F}', String(stats.found))
@@ -97,19 +97,14 @@ function updateCollectionProgress() {
 
 function openMissingFlashReport() {
   const box = document.getElementById('missingFlashReport');
-  const input = document.getElementById('missingFlashReportText');
   const title = document.getElementById('missingReportTitle');
   const copy = document.getElementById('missingReportCopy');
-  const cancelBtn = document.getElementById('missingReportCancelBtn');
-  const submitBtn = document.getElementById('missingReportSubmitBtn');
+  const closeBtn = document.getElementById('missingReportCloseBtn');
   if (!box) return;
   if (title) title.textContent = _uiCopy('REPORT_MODAL_TITLE', 'Signaler une miniature introuvable');
-  if (copy) copy.textContent = _uiCopy('REPORT_MODAL_COPY', 'Décris brièvement le problème et on le transmet à l\'organisateur.');
-  if (input) input.placeholder = _uiCopy('REPORT_MODAL_PLACEHOLDER', 'Ex: QR absent, photo introuvable, trésor déplacé...');
-  if (cancelBtn) cancelBtn.textContent = _uiCopy('REPORT_MODAL_CANCEL', 'Annuler');
-  if (submitBtn) submitBtn.textContent = _uiCopy('REPORT_MODAL_SUBMIT', 'Copier le signalement');
+  if (copy) copy.textContent = _uiCopy('REPORT_MODAL_COPY', 'Si vous pensez qu\'une miniature a disparue du jeu, envoyez un mail avec les infos a Guilhem@jadikan-lp.com');
+  if (closeBtn) closeBtn.textContent = _uiCopy('REPORT_MODAL_CLOSE', 'Fermer');
   box.classList.add('open');
-  if (input) input.focus();
 }
 
 function closeMissingFlashReport() {
@@ -118,33 +113,8 @@ function closeMissingFlashReport() {
 }
 
 async function submitMissingFlashReport() {
-  const input = document.getElementById('missingFlashReportText');
-  const report = String(input?.value || '').trim();
-  const stats = _getFlashCollectionStats();
-  const payloadTitle = _uiCopy('REPORT_PAYLOAD_TITLE', 'Signalement miniature introuvable');
-  const payloadPseudo = _uiCopy('REPORT_PAYLOAD_PSEUDO', 'Pseudo: {PSEUDO}').replace('{PSEUDO}', myPseudo || 'Invité');
-  const payloadProgress = _uiCopy('REPORT_PAYLOAD_PROGRESS', 'Progression: {F}/{T} cueillies, {R} restantes')
-    .replace('{F}', String(stats.found))
-    .replace('{T}', String(stats.total))
-    .replace('{R}', String(stats.remaining));
-  const lines = [
-    payloadTitle,
-    payloadPseudo,
-    payloadProgress,
-    report || _uiCopy('REPORT_PAYLOAD_EMPTY', 'Aucun détail ajouté.')
-  ];
-  const payload = lines.join('\n');
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(payload);
-      _checkinError(_uiCopy('REPORT_TOAST_COPIED', 'Signalement copié. Tu peux le transmettre à l\'organisateur.'));
-    } else {
-      _checkinError(_uiCopy('REPORT_TOAST_READY', 'Signalement prêt. Copie-le manuellement et transmets-le à l\'organisateur.'));
-    }
-  } finally {
-    closeMissingFlashReport();
-    if (input) input.value = '';
-  }
+  // Legacy no-op kept for backward compatibility with cached pages.
+  closeMissingFlashReport();
 }
 
 function _fmtDuration(secs) {
@@ -614,7 +584,7 @@ async function loadMoi() {
 
   const pseudo = myPseudo || 'Invité';
   const grad = pseudoGradient(pseudo);
-  const progressTpl = _uiCopy('COMPTE_PROGRESS_TEMPLATE', '{F} trouvées sur {T} · {R} restantes');
+  const progressTpl = _uiCopy('COMPTE_PROGRESS_TEMPLATE', '{F} miniatures trouvees sur {T} cachees ({R} restantes)');
   el.innerHTML = `
     <div class="moi-avatar" style="background:${grad}">${escHtml(pseudo.charAt(0))}</div>
     <div class="moi-pseudo">${escHtml(pseudo)}</div>
