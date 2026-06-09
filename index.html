@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,viewport-fit=cover">
+  <title>Urban3DQuest Flash · Jadikan</title>
+  <meta name="theme-color" content="#f4f1ec">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Urban 3D Quest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="css/design-tokens.css">
+  <link rel="stylesheet" href="css/index-core.css?v=20260531-v31428">
+</head>
+<body>
+
+<!-- ── Background map (landing) ─────────────────────── -->
+<div id="bgMap"></div>
+
+<!-- ── Pseudo screen ────────────────────────────────── -->
+<div id="pseudoScreen">
+  <div class="ps-box">
+    <div class="ps-logo">Jadikan · Urban 3D Quest</div>
+    <div class="ps-title">Urban 3D Quest</div>
+    <p class="ps-sub">J'ai caché des miniatures dans la ville.<br>C'est à toi de les trouver.</p>
+    <input type="text" id="pseudoInput" placeholder="Ton pseudo" maxlength="20" autocomplete="username" autocapitalize="characters">
+    <input type="password" id="passwordInput" placeholder="MOT DE PASSE" maxlength="64" autocomplete="current-password" class="field-spaced">
+    <div id="gameCodeWrap" class="field-hidden">
+      <input type="text" id="gameCodeInput" placeholder="CODE D'ACCÈS" maxlength="20" autocomplete="off" autocapitalize="characters" class="field-accent">
+    </div>
+    <p id="pseudoErr"></p>
+    <button class="btn-primary" id="startBtn" onclick="startGame()">Je cherche</button>
+    <button class="btn-main btn-ghost mt-10" id="guestBtn" onclick="continueAsGuest()">Juste regarder d'abord</button>
+  </div>
+</div>
+
+<!-- ── Header ────────────────────────────────────────── -->
+<header>
+  <h1>🏙 Urban 3D Quest</h1>
+  <span id="gpsChip" title="Précision GPS">
+    <span id="gpsDot"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="5.5" stroke-width="1.8"/><circle cx="10" cy="10" r="1.8" fill="currentColor" stroke="none"/><line x1="10" y1="1" x2="10" y2="4" stroke-width="1.8"/><line x1="10" y1="16" x2="10" y2="19" stroke-width="1.8"/><line x1="1" y1="10" x2="4" y2="10" stroke-width="1.8"/><line x1="16" y1="10" x2="19" y2="10" stroke-width="1.8"/></svg></span>
+    <span id="gpsLabel">GPS…</span>
+  </span>
+  <button id="tutorialMiniBtn" onclick="openQuickTutorial()" aria-label="Ouvrir le tutoriel">Aide</button>
+  <div class="brand-tag">Un jeu de <a href="https://www.instagram.com/jadikan/" target="_blank" rel="noopener noreferrer">Jadikan</a></div>
+  <span class="pseudo-chip clickable" id="headerPseudo" onclick="onHeaderPseudoClick()"></span>
+</header>
+<nav role="tablist" aria-label="Navigation principale">
+  <button aria-label="Mode Flash" role="tab" aria-selected="true" id="navDeclic" class="active" onclick="setGameMode('unique');showTab('explore',this)">
+    <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 6 13h6l-3 7 9-11h-6z"/></svg></span>
+    <span class="nav-label">Flash</span>
+  </button>
+  <button aria-label="Compte" role="tab" aria-selected="false" id="navCompte" onclick="showTab('moi',this)">
+    <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7.5" r="3.5"/><path d="M2 20c0-4 3.58-7.5 8-7.5s8 3.5 8 7.5"/><circle cx="17.5" cy="4" r="2.2" fill="currentColor" stroke="none"/></svg></span>
+    <span class="nav-label">Compte</span>
+  </button>
+  <button aria-label="Classement" role="tab" aria-selected="false" id="navScores" onclick="showTab('scores',this)">
+    <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h8v7c0 2.76-1.79 5-4 5s-4-2.24-4-5V3z"/><path d="M7 6H4a2 2 0 0 0 0 4h3"/><path d="M15 6h3a2 2 0 0 1 0 4h-3"/><line x1="11" y1="15" x2="11" y2="18"/><path d="M7.5 18.5h7"/></svg></span>
+    <span class="nav-label">Scores</span>
+  </button>
+</nav>
+<div id="modeQuickGuide">
+  <div id="modeGuideCopy">
+    <strong id="modeGuideTitle">Mode Flash</strong>
+    <span id="modeGuideText">Miniatures uniques à cueillir en premier</span>
+  </div>
+  <button id="openTutorialBtn" onclick="openQuickTutorial()">Tutoriel 30s</button>
+</div>
+
+<!-- ── Explorer (carte + boussole fusionnées) ────────── -->
+<div id="panelExplore" class="panel active">
+  <div id="miniMap" class="relative-wrap">
+    <button id="locateMeBtn" onclick="recenterMap()" title="Recentrer sur ma position"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.8"/><circle cx="10" cy="10" r="2.5" fill="currentColor"/><line x1="10" y1="1" x2="10" y2="4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="10" y1="15.5" x2="10" y2="19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="1" y1="10" x2="4.5" y2="10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="15.5" y1="10" x2="19" y2="10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    <div id="compassCorner" aria-label="Boussole">
+      <div id="compassRose" aria-hidden="true">
+        <svg id="compassRoseSvg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="44" fill="none" stroke="#5a4526" stroke-width="4"/>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="#6f5630" stroke-width="1.5"/>
+          <g stroke="#6b522e" stroke-width="1.3" stroke-linecap="round">
+            <line x1="50" y1="12" x2="50" y2="22"/>
+            <line x1="50" y1="78" x2="50" y2="88"/>
+            <line x1="12" y1="50" x2="22" y2="50"/>
+            <line x1="78" y1="50" x2="88" y2="50"/>
+            <line x1="24" y1="24" x2="31" y2="31"/>
+            <line x1="76" y1="24" x2="69" y2="31"/>
+            <line x1="24" y1="76" x2="31" y2="69"/>
+            <line x1="76" y1="76" x2="69" y2="69"/>
+          </g>
+          <g fill="#5a4526" opacity="0.95">
+            <polygon points="50,4 56,34 50,28 44,34"/>
+            <polygon points="96,50 66,56 72,50 66,44"/>
+            <polygon points="50,96 56,66 50,72 44,66"/>
+            <polygon points="4,50 34,56 28,50 34,44"/>
+          </g>
+          <g fill="#745b34" opacity="0.9">
+            <polygon points="76,24 61,43 64,36 57,39"/>
+            <polygon points="76,76 57,61 64,64 61,57"/>
+            <polygon points="24,76 39,57 36,64 43,61"/>
+            <polygon points="24,24 43,39 36,36 39,43"/>
+          </g>
+          <circle cx="50" cy="50" r="16" fill="none" stroke="#5a4526" stroke-width="3"/>
+          <circle cx="50" cy="50" r="7" fill="#5a4526"/>
+        </svg>
+      </div>
+    </div>
+    <div id="gpsLoadingPanel" aria-live="polite" aria-hidden="true">
+      <div class="gps-loading-card">
+        <div class="gps-loading-spinner" aria-hidden="true"></div>
+        <div class="gps-loading-title">Connexion GPS</div>
+        <div class="gps-loading-copy">La carte se calibre avant de démarrer la boussole. Attends la première position GPS.</div>
+        <div class="gps-loading-note">Les autres panneaux restent accessibles.</div>
+      </div>
+    </div>
+    <div id="gpsSettleHint" aria-live="polite">
+      <span class="gsh-icon" aria-hidden="true"><span class="gsh-dot"></span></span>
+      <span>Calage GPS en cours…</span>
+    </div>
+    <button id="gpsKickBtn" onclick="requestGpsKick()"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="5.5" stroke-width="1.8"/><circle cx="10" cy="10" r="1.8" fill="currentColor" stroke="none"/><line x1="10" y1="1" x2="10" y2="4" stroke-width="1.8"/><line x1="10" y1="16" x2="10" y2="19" stroke-width="1.8"/><line x1="1" y1="10" x2="4" y2="10" stroke-width="1.8"/><line x1="16" y1="10" x2="19" y2="10" stroke-width="1.8"/></svg><span>Activer GPS</span></button>
+    <button id="compassPermBtn" onclick="requestCompassPermission()">🧭 Activer le compas (iOS)</button>
+    <button id="compassDebugBtn" onclick="toggleCompassDebug()">DBG</button>
+    <div id="compassDebug"></div>
+    <div id="radarBar"></div>
+    <div id="flashHint">
+      <img id="flashHintPhoto" src="" alt="">
+      <div>
+        <div id="flashHintLabel">Voilà ce que tu cherches</div>
+        <div id="flashHintSub">Encore quelques mètres…</div>
+      </div>
+    </div>
+    <div id="flashTakenToast"></div>
+    <div id="batterySaverOverlay">
+      <div class="bso-icon">🔋</div>
+      <div class="bso-msg">Mode économie activé<br>La carte est suspendue</div>
+      <div class="bso-sub">⬆ Radar GPS toujours actif</div>
+    </div>
+  </div>
+  <div id="nearestList"></div>
+</div>
+
+<!-- ── Photo viewer overlay ──────────────────────────── -->
+<div id="photoViewer" onclick="closePhotoViewer()">
+  <img id="photoViewerImg" src="" alt="Photo agrandie de la trouvaille">
+  <button onclick="closePhotoViewer()" aria-label="Fermer la photo">✕ Fermer</button>
+</div>
+
+<!-- ── Leaderboard ───────────────────────────────────── -->
+<div id="panelScores" class="panel">
+  <div id="myCard"></div>
+  <hr class="lp-line separator-tight">
+  <button class="btn-main btn-ghost-success" id="lbRefreshBtn" onclick="refreshScoresManually()" style="width:100%;margin:0 0 10px 0">↻ Actualiser</button>
+  <div id="lbList"><p class="loading-copy">Chargement…</p></div>
+  <div class="lb-refresh" id="lbRefresh"></div>
+  <div class="tiny-note" id="gameVersion"></div>
+</div>
+
+<!-- ── Compte (profil + collection) ──────────────────── -->
+<div id="panelMoi" class="panel">
+  <div id="moiContent"></div>
+  <div class="cn-header">
+    <span class="cn-header-title">Ma collection</span>
+    <span class="cn-header-count" id="carnetCount"></span>
+  </div>
+  <div id="carnetList"></div>
+  <div id="moiActions" class="moi-actions"></div>
+</div>
+
+<!-- ── Treasure sheet ────────────────────────────────── -->
+<div id="treasureSheet">
+  <div class="ts-backdrop" onclick="closeTreasureSheet()"></div>
+  <div class="ts-card">
+    <div class="ts-handle"></div>
+    <div id="tsBody"></div>
+  </div>
+</div>
+
+<!-- ── Flash Capture FAB (miniatures Flash: zone affichée) ───── -->
+<button id="flashFab" onclick="captureUnique()" aria-label="Scanner la miniature Flash">
+  <svg viewBox="0 0 74 74" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:26px;height:26px;flex-shrink:0;pointer-events:none" aria-hidden="true">
+    <path d="M18 26V18h8" stroke="rgba(255,255,255,0.95)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M18 48v8h8" stroke="rgba(255,255,255,0.95)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M56 26V18h-8" stroke="rgba(255,255,255,0.95)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M56 48v8h-8" stroke="rgba(255,255,255,0.95)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="37" cy="37" r="8" fill="rgba(255,255,255,0.9)"/>
+  </svg>
+  <span>Scanner</span>
+</button>
+
+<!-- ── Progress bar ──────────────────────────────────── -->
+<div id="progressBar">
+  <div class="pb-label">
+    <span>⚡ Flash</span>
+    <strong id="pbCount">0 / 5</strong>
+  </div>
+  <div class="pb-track"><div class="pb-fill" id="pbFill" style="width:0%"></div></div>
+</div>
+
+<!-- ── Found modal ───────────────────────────────────── -->
+<div id="foundModal">
+  <div class="found-box relative-wrap" style="overflow:hidden">
+    <div id="foundFlashOverlay"></div>
+    <img id="foundPhoto" class="found-photo" alt="photo de la trouvaille">
+    <div id="foundPhotoStrip" class="field-hidden"></div>
+    <div class="found-emoji" id="foundEmoji"><span class="ui-icon lg teal" aria-hidden="true"><svg viewBox="0 0 22 22"><path d="M2 9a2 2 0 0 1 2-2h1.2L6.8 5h8.4L16.8 7H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9z"/><circle cx="11" cy="13" r="3"/></svg></span></div>
+    <div class="found-label" id="foundLabel">RÉVÉLATION</div>
+    <h2 id="foundTitle">Révélé.</h2>
+    <div class="duration" id="foundDuration"></div>
+    <p id="foundDesc"></p>
+    <div id="foundSharePanel" class="found-share field-hidden">
+      <div class="found-share-kicker">FLASH CAPTURÉ</div>
+      <div class="found-share-title field-hidden"></div>
+      <div class="found-share-text field-hidden"></div>
+      <div class="found-share-actions">
+        <button class="btn-primary" id="foundShareCaptureBtn" onclick="shareUniqueCapture()">Partager ma capture</button>
+        <button class="btn-ghost found-share-link" id="foundInviteBtn" onclick="inviteFriendsFromCapture()">Inviter mes amis</button>
+      </div>
+    </div>
+    <hr class="lp-line">
+    <button class="btn-main btn-ghost-success field-hidden" id="foundRetryBtn" onclick="_retryCheckin()">Réessayer</button>
+    <button class="btn-primary" aria-label="Retour au jeu" onclick="closeFound()">Retour au jeu</button>
+  </div>
+</div>
+
+<!-- ── Quick tutorial overlay ───────────────────────── -->
+<div id="quickTutorial" onclick="closeQuickTutorial(event)">
+  <div id="quickTutorialCard">
+    <h3>Mode Flash unique.</h3>
+    <p>Trouve les miniatures avant les autres joueurs.</p>
+    <img id="qtExamplePhoto" src="" alt="Exemple de balise physique">
+    <div class="qt-grid">
+      <div class="qt-card">
+        <strong>Mode Flash</strong>
+        <span>Trouve les miniatures qui apparaissent sur la carte<br>Objectif : les cueillir avant les autres</span>
+      </div>
+    </div>
+    <div class="qt-actions">
+      <button class="qt-btn primary" onclick="tutorialEnableGps()">1) Activer GPS</button>
+      <button class="qt-btn secondary" id="tutorialCompassBtn" onclick="tutorialEnableCompass()">2) Activer compas</button>
+      <button class="qt-btn ghost" onclick="closeQuickTutorial()">3) Jouer maintenant</button>
+    </div>
+    <div class="qt-note">Active GPS + compas avant de démarrer pour une meilleure fluidité.</div>
+    <div id="qtClickableTip" class="qt-note field-hidden"></div>
+    <div id="qtCompassNote" class="field-hidden">⚠️ iOS détecté — active le compas (étape 2) pour que les flèches s'orientent vers les balises.</div>
+  </div>
+</div>
+
+<!-- ── QR Scanner overlay ──────────────────────────── -->
+<div id="qrOverlay">
+  <div id="qrUI">
+    <div id="qrGuideVisualWrap" class="field-hidden">
+      <img id="qrGuideVisual" alt="Exemple de prise de photo du QR code">
+    </div>
+    <div class="qr-emoji" id="qrEmojiFallback">📷</div>
+    <div id="qrTarget">
+      <img id="qrTargetPhoto" alt="Photo de la miniature cible">
+      <span class="qrt-lbl">Tu cherches</span>
+      <span class="qrt-name"></span>
+      <span class="qrt-quest"></span>
+    </div>
+    <div id="qrStatus">Vise le QR pour le révéler.</div>
+    <div id="qrDebugLog" class="field-hidden"></div>
+    <div id="qrReader"></div>
+    <div id="qrZoomRow" class="field-hidden" aria-label="Contrôles de zoom">
+      <button id="qrZoomOutBtn" onclick="adjustQRZoom(-1)" aria-label="Réduire le zoom">−</button>
+      <span id="qrZoomLabel">Zoom 1.0x</span>
+      <button id="qrZoomInBtn" onclick="adjustQRZoom(1)" aria-label="Augmenter le zoom">+</button>
+    </div>
+    <button id="qrTorchBtn" onclick="toggleQRTorch()">💡 Lampe</button>
+    <div id="qrPreviewWrap"><img id="qrPreviewImg" alt="preview"></div>
+    <label id="qrPhotoBtn">
+      <span id="qrPhotoBtnText">📷 Prendre la photo</span>
+      <input type="file" accept="image/*" capture="environment" id="qrFileInput" class="field-hidden">
+    </label>
+    <button id="qrRetryPhotoBtn" class="field-hidden" onclick="retryQRPhoto()">↻ Reprendre la photo</button>
+    <div id="qrTips" class="field-hidden">Astuce : rapproche-toi du QR code, évite les reflets et assure-toi qu'il occupe bien l'image.</div>
+    <button id="qrCloseBtn" onclick="closeQRScanner()" aria-label="Retour au jeu">↩ Retour au jeu</button>
+  </div>
+</div>
+
+<!-- ── Pause screen ──────────────────────────────────── -->
+<!-- ── Welcome return toast ── -->
+<div id="welcomeToast"></div>
+
+<div id="pauseScreen">
+  <div class="qc-trophy">⏸</div>
+  <h2>Jeu en pause</h2>
+  <p style="color:var(--ink-2);font-size:0.85rem">L'organisateur a mis le jeu en pause.<br>Patiente…</p>
+</div>
+
+<div id="versionLockScreen" aria-live="polite" role="alertdialog" aria-modal="true">
+  <div class="version-lock-box">
+    <div class="qc-trophy">⚠️</div>
+    <h2>Mise a jour requise</h2>
+    <p class="version-lock-copy">Cette version de l'app n'est plus supportee.</p>
+    <p class="version-lock-meta">Version actuelle: <strong id="versionLockCurrent">-</strong></p>
+    <p class="version-lock-meta">Version minimum: <strong id="versionLockRequired">-</strong></p>
+    <button class="btn-primary" onclick="retryVersionRefresh()">Mettre a jour maintenant</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.legacy.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/supabase-env.js?v=20260531-v31428"></script>
+<script src="js/config.js?v=20260531-v31428"></script>
+<script src="js/ui-copy.js?v=20260531-v31428"></script>
+<script src="js/auth.js?v=20260531-v31428"></script>
+<script src="js/map-init.js?v=20260531-v31428"></script>
+<script src="js/gps.js?v=20260531-v31428"></script>
+<script src="js/compass.js?v=20260531-v31428"></script>
+<script src="js/qr.js?v=20260531-v31428"></script>
+<script src="js/game-init.js?v=20260531-v31428"></script>
+<script src="js/find.js?v=20260531-v31428"></script>
+<script src="js/leaderboard.js?v=20260531-v31428"></script>
+<script src="js/ui.js?v=20260531-v31428"></script>
+</body>
+</html>
