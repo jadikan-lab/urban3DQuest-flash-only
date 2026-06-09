@@ -25,16 +25,15 @@
 <div id="pseudoScreen">
   <div class="ps-box">
     <div class="ps-logo">Jadikan · Urban 3D Quest</div>
-    <div class="ps-title">Urban 3D Quest</div>
-    <p class="ps-sub">J'ai caché des miniatures dans la ville.<br>C'est à toi de les trouver.</p>
+    <div class="ps-title">Mode Flash</div>
+    <p class="ps-sub">Entre ton pseudo, active le GPS, et pars en chasse.</p>
     <input type="text" id="pseudoInput" placeholder="Ton pseudo" maxlength="20" autocomplete="username" autocapitalize="characters">
     <input type="password" id="passwordInput" placeholder="MOT DE PASSE" maxlength="64" autocomplete="current-password" class="field-spaced">
     <div id="gameCodeWrap" class="field-hidden">
       <input type="text" id="gameCodeInput" placeholder="CODE D'ACCÈS" maxlength="20" autocomplete="off" autocapitalize="characters" class="field-accent">
     </div>
     <p id="pseudoErr"></p>
-    <button class="btn-primary" id="startBtn" onclick="startGame()">Je cherche</button>
-    <button class="btn-main btn-ghost mt-10" id="guestBtn" onclick="continueAsGuest()">Juste regarder d'abord</button>
+    <button class="btn-primary" id="startBtn" onclick="startGame()">Entrer dans le jeu</button>
   </div>
 </div>
 
@@ -75,43 +74,11 @@
 <div id="panelExplore" class="panel active">
   <div id="miniMap" class="relative-wrap">
     <button id="locateMeBtn" onclick="recenterMap()" title="Recentrer sur ma position"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.8"/><circle cx="10" cy="10" r="2.5" fill="currentColor"/><line x1="10" y1="1" x2="10" y2="4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="10" y1="15.5" x2="10" y2="19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="1" y1="10" x2="4.5" y2="10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="15.5" y1="10" x2="19" y2="10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
-    <div id="compassCorner" aria-label="Boussole">
-      <div id="compassRose" aria-hidden="true">
-        <svg id="compassRoseSvg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="50" cy="50" r="44" fill="none" stroke="#5a4526" stroke-width="4"/>
-          <circle cx="50" cy="50" r="38" fill="none" stroke="#6f5630" stroke-width="1.5"/>
-          <g stroke="#6b522e" stroke-width="1.3" stroke-linecap="round">
-            <line x1="50" y1="12" x2="50" y2="22"/>
-            <line x1="50" y1="78" x2="50" y2="88"/>
-            <line x1="12" y1="50" x2="22" y2="50"/>
-            <line x1="78" y1="50" x2="88" y2="50"/>
-            <line x1="24" y1="24" x2="31" y2="31"/>
-            <line x1="76" y1="24" x2="69" y2="31"/>
-            <line x1="24" y1="76" x2="31" y2="69"/>
-            <line x1="76" y1="76" x2="69" y2="69"/>
-          </g>
-          <g fill="#5a4526" opacity="0.95">
-            <polygon points="50,4 56,34 50,28 44,34"/>
-            <polygon points="96,50 66,56 72,50 66,44"/>
-            <polygon points="50,96 56,66 50,72 44,66"/>
-            <polygon points="4,50 34,56 28,50 34,44"/>
-          </g>
-          <g fill="#745b34" opacity="0.9">
-            <polygon points="76,24 61,43 64,36 57,39"/>
-            <polygon points="76,76 57,61 64,64 61,57"/>
-            <polygon points="24,76 39,57 36,64 43,61"/>
-            <polygon points="24,24 43,39 36,36 39,43"/>
-          </g>
-          <circle cx="50" cy="50" r="16" fill="none" stroke="#5a4526" stroke-width="3"/>
-          <circle cx="50" cy="50" r="7" fill="#5a4526"/>
-        </svg>
-      </div>
-    </div>
     <div id="gpsLoadingPanel" aria-live="polite" aria-hidden="true">
       <div class="gps-loading-card">
         <div class="gps-loading-spinner" aria-hidden="true"></div>
         <div class="gps-loading-title">Connexion GPS</div>
-        <div class="gps-loading-copy">La carte se calibre avant de démarrer la boussole. Attends la première position GPS.</div>
+        <div class="gps-loading-copy">La carte se calibre. Attends la première position GPS.</div>
         <div class="gps-loading-note">Les autres panneaux restent accessibles.</div>
       </div>
     </div>
@@ -120,7 +87,6 @@
       <span>Calage GPS en cours…</span>
     </div>
     <button id="gpsKickBtn" onclick="requestGpsKick()"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="5.5" stroke-width="1.8"/><circle cx="10" cy="10" r="1.8" fill="currentColor" stroke="none"/><line x1="10" y1="1" x2="10" y2="4" stroke-width="1.8"/><line x1="10" y1="16" x2="10" y2="19" stroke-width="1.8"/><line x1="1" y1="10" x2="4" y2="10" stroke-width="1.8"/><line x1="16" y1="10" x2="19" y2="10" stroke-width="1.8"/></svg><span>Activer GPS</span></button>
-    <button id="compassPermBtn" onclick="requestCompassPermission()">🧭 Activer le compas (iOS)</button>
     <button id="compassDebugBtn" onclick="toggleCompassDebug()">DBG</button>
     <div id="compassDebug"></div>
     <div id="radarBar"></div>
@@ -238,12 +204,10 @@
     </div>
     <div class="qt-actions">
       <button class="qt-btn primary" onclick="tutorialEnableGps()">1) Activer GPS</button>
-      <button class="qt-btn secondary" id="tutorialCompassBtn" onclick="tutorialEnableCompass()">2) Activer compas</button>
-      <button class="qt-btn ghost" onclick="closeQuickTutorial()">3) Jouer maintenant</button>
+      <button class="qt-btn ghost" onclick="closeQuickTutorial()">2) Jouer maintenant</button>
     </div>
-    <div class="qt-note">Active GPS + compas avant de démarrer pour une meilleure fluidité.</div>
+    <div class="qt-note">Active GPS puis lance la chasse.</div>
     <div id="qtClickableTip" class="qt-note field-hidden"></div>
-    <div id="qtCompassNote" class="field-hidden">⚠️ iOS détecté — active le compas (étape 2) pour que les flèches s'orientent vers les balises.</div>
   </div>
 </div>
 

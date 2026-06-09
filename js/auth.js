@@ -36,8 +36,8 @@ function unlockAccessGate() {
   const startBtn = document.getElementById('startBtn');
   const subtitle = document.querySelector('.ps-sub');
   const codeWrap = document.getElementById('gameCodeWrap');
-  if (startBtn) startBtn.textContent = 'Je cherche';
-  if (subtitle) subtitle.innerHTML = 'J\'ai caché des miniatures dans la ville.<br>C\'est à toi de les trouver.';
+  if (startBtn) startBtn.textContent = 'Entrer dans le jeu';
+  if (subtitle) subtitle.textContent = 'Entre ton pseudo, active le GPS, et pars en chasse.';
   if (codeWrap) codeWrap.style.display = 'none';
   const pseudoInput = document.getElementById('pseudoInput');
   if (pseudoInput) pseudoInput.focus();
@@ -223,14 +223,14 @@ async function startGame() {
     }
     err.style.display = 'block';
     document.getElementById('startBtn').disabled = false;
-    document.getElementById('startBtn').textContent = '🚀 Rejoindre le jeu';
+    document.getElementById('startBtn').textContent = 'Entrer dans le jeu';
     return;
   }
   if (!authResult?.ok) {
     err.textContent = authResult?.message || (isStg ? 'Connexion impossible en STG. Ouvre le jeu en PROD avec ?env=prod.' : 'Connexion impossible. Vérifie ton pseudo, ton mot de passe et l\'état du backend.');
     err.style.display = 'block';
     document.getElementById('startBtn').disabled = false;
-    document.getElementById('startBtn').textContent = '🚀 Rejoindre le jeu';
+    document.getElementById('startBtn').textContent = 'Entrer dans le jeu';
     return;
   }
 

@@ -6,6 +6,8 @@ function _onGeoSuccess(pos) {
   if (geoNoFixHintTimer) { clearTimeout(geoNoFixHintTimer); geoNoFixHintTimer = null; }
   const gpsKickBtn = document.getElementById('gpsKickBtn');
   if (gpsKickBtn) gpsKickBtn.style.display = 'none';
+  const locateBtn = document.getElementById('locateMeBtn');
+  if (locateBtn && activeTab === 'explore') locateBtn.style.display = 'block';
   // Smooth GPS: keep last 5 positions, weighted average
   gpsHistory.push({ lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy });
   if (gpsHistory.length > 3) gpsHistory.shift();
@@ -193,8 +195,6 @@ function recenterMap() {
   if (!gameMap || playerLat === null) return;
   mapFollowing = true;
   gameMap.setView([playerLat, playerLng], gameMap.getZoom(), { animate: true });
-  var btn = document.getElementById('locateMeBtn');
-  if (btn) btn.style.display = 'none';
 }
 
 function haversine(lat1, lng1, lat2, lng2) {

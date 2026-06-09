@@ -33,6 +33,8 @@ function showTab(name, btn) {
   }
   const gpsKickBtn = document.getElementById('gpsKickBtn');
   if (gpsKickBtn) gpsKickBtn.style.display = (name === 'explore' && isIOSDevice() && playerLat === null) ? 'block' : 'none';
+  const locateBtn = document.getElementById('locateMeBtn');
+  if (locateBtn) locateBtn.style.display = (name === 'explore' && playerLat !== null) ? 'block' : 'none';
   updateGpsLoadingPanel();
   if (name === 'explore') {
     setTimeout(() => gameMap && gameMap.invalidateSize(), 60);

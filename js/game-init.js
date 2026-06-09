@@ -265,29 +265,12 @@ function tutorialEnableGps() {
 }
 
 function tutorialEnableCompass() {
-  const hasCompassPermAPI = typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function';
-  if (hasCompassPermAPI) {
-    requestCompassPermission();
-    return;
-  }
-  const bar = document.getElementById('radarBar');
-  if (bar) {
-    bar.textContent = '🧭 Compas actif (ou non requis sur cet appareil)';
-    bar.className = '';
-  }
+  requestGpsKick();
 }
 
 function maybeOpenQuickTutorial() {
   updateTutorialEntryPoints();
   if (tutorialSeen) return;
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const hasCompassAPI = typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function';
-  if (isIOS && hasCompassAPI) {
-    const btn = document.getElementById('tutorialCompassBtn');
-    const note = document.getElementById('qtCompassNote');
-    if (btn) btn.classList.add('compass-required');
-    if (note) note.style.display = 'block';
-  }
   setTimeout(() => openQuickTutorial(), 500);
 }
 

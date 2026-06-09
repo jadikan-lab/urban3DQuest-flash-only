@@ -76,37 +76,11 @@ function refreshEffectiveHeading() {
 function applyMapHeadingRotation() {
   if (!gameMap) return;
   const mapPane = gameMap.getPane('mapPane');
-  const radarBg = document.getElementById('radarBg');
   if (!mapPane) return;
-  const shouldRotate = activeTab === 'explore' && activeGameMode === 'unique' && playerLat !== null && deviceHeading !== null;
-  if (!shouldRotate) {
-    mapVisualAngle = null;
-    mapPane.style.rotate = '0deg';
-    mapPane.style.scale = '1';
-    mapPane.style.transformOrigin = '50% 50%';
-    if (radarBg) {
-      radarBg.style.rotate = '0deg';
-      radarBg.style.scale = '1';
-      radarBg.style.transformOrigin = '50% 50%';
-    }
-    return;
-  }
-  const p = gameMap.latLngToContainerPoint([playerLat, playerLng]);
-  const origin = `${p.x}px ${p.y}px`;
-  mapVisualAngle = _nextVisualAngle(mapVisualAngle, -deviceHeading);
-  const rot = `${mapVisualAngle}deg`;
-  const mapSize = gameMap.getSize ? gameMap.getSize() : null;
-  const minSide = mapSize ? Math.max(1, Math.min(mapSize.x, mapSize.y)) : 1;
-  const diag = mapSize ? Math.hypot(mapSize.x, mapSize.y) : minSide;
-  const radarScale = Math.max(1.45, diag / minSide);
-  mapPane.style.transformOrigin = origin;
-  mapPane.style.rotate = rot;
-  mapPane.style.scale = String(radarScale);
-  if (radarBg) {
-    radarBg.style.transformOrigin = origin;
-    radarBg.style.rotate = rot;
-    radarBg.style.scale = String(radarScale);
-  }
+  mapVisualAngle = null;
+  mapPane.style.rotate = '0deg';
+  mapPane.style.scale = '1';
+  mapPane.style.transformOrigin = '50% 50%';
 }
 
 function scheduleCompassRender(force) {
@@ -128,19 +102,10 @@ function scheduleCompassRender(force) {
 }
 
 function startOrientationWatch() {
-  // iOS 13+: needs explicit permission via a user-gesture button tap
-  if (typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission === 'function') {
-    const btn = document.getElementById('compassPermBtn');
-    btn.style.display = 'block';
-    btn.classList.add('compass-perm-pulse');
-    // Show a one-time toast to make the button discoverable
-    if (!localStorage.getItem('u3dq_compassAsked')) {
-      _showCompassToast();
-    }
-    return;
-  }
-  _attachOrientationListeners();
+  // Flash-only GPS UX: no compass permission flow required.
+  deviceHeading = null;
+  headingSource = 'none';
+  applyMapHeadingRotation();
 }
 
 function _showCompassToast() {
@@ -156,28 +121,7 @@ function _showCompassToast() {
 }
 
 async function requestCompassPermission() {
-  if (typeof DeviceOrientationEvent === 'undefined' || typeof DeviceOrientationEvent.requestPermission !== 'function') {
-    _attachOrientationListeners();
-    scheduleCompassRender(true);
-    return;
-  }
-  try {
-    const res = await DeviceOrientationEvent.requestPermission();
-    localStorage.setItem('u3dq_compassAsked', '1');
-    const btn = document.getElementById('compassPermBtn');
-    if (res === 'granted') {
-      btn.style.display = 'none';
-      _attachOrientationListeners();
-      scheduleCompassRender(true);
-      if (playerLat === null) requestGpsKick();
-    } else {
-      btn.textContent = '⚠️ Compas refusé — flèches statiques';
-      btn.classList.remove('compass-perm-pulse');
-    }
-  } catch {
-    localStorage.setItem('u3dq_compassAsked', '1');
-    document.getElementById('compassPermBtn').textContent = '⚠️ Erreur compas';
-  }
+  requestGpsKick();
 }
 
 function _attachOrientationListeners() {
@@ -269,18 +213,7 @@ function _updateRadarBg() {
 }
 
 function updateCompassCorner() {
-  const el = document.getElementById('compassCorner');
-  const rose = document.getElementById('compassRose');
-  if (!el || !rose) return;
-  const show = activeTab === 'explore' && activeGameMode === 'unique' && playerLat !== null && deviceHeading !== null;
-  el.classList.toggle('active', show);
-  if (!show) {
-    compassVisualAngle = null;
-    rose.style.transform = 'rotate(0deg)';
-    return;
-  }
-  compassVisualAngle = _nextVisualAngle(compassVisualAngle, -deviceHeading);
-  rose.style.transform = `rotate(${compassVisualAngle}deg)`;
+  compassVisualAngle = null;
 }
 
 function updateCompass() {
