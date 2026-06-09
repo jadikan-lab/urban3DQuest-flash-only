@@ -44,10 +44,11 @@ NAV_SCORES:         Scores
 > Pour Flash, `{N}` = nombre de miniatures encore disponibles.
 
 ```
-GUIDE_FLASH_TITRE:       Mode Flash
+GUIDE_FLASH_TITRE:       Progression
 GUIDE_FLASH_SOUS_ZERO:   Aucune miniature disponible pour le moment
 GUIDE_FLASH_SOUS_SOLO:   Plus qu'une miniature à trouver
 GUIDE_FLASH_SOUS_MULTI:  {N} miniatures à cueillir · sois le premier !
+GUIDE_PROGRESS_TEMPLATE: {R} restantes · {F}/{T} cueillies
 ```
 
 ---
@@ -137,6 +138,28 @@ FLASH_ALREADY_TITRE:   Tu as déjà flashé ce polaroid.
 COMPTE_COLLECTION_TITRE:  Ma collection
 COMPTE_COLLECTION_SOUS:   📷 Polaroids trouvés
 COMPTE_VIDE:              Aucune miniature trouvée pour l'instant
+COMPTE_PROGRESS_TEMPLATE: {F} trouvées sur {T} · {R} restantes
+COMPTE_REPORT_CTA:        Signaler une miniature introuvable
+```
+
+---
+
+## SIGNALEMENT MINIATURE INTROUVABLE
+
+```
+REPORT_MODAL_TITLE:        Signaler une miniature introuvable
+REPORT_MODAL_COPY:         Décris brièvement le problème et on le transmet à l'organisateur.
+REPORT_MODAL_PLACEHOLDER:  Ex: QR absent, photo introuvable, trésor déplacé...
+REPORT_MODAL_CANCEL:       Annuler
+REPORT_MODAL_SUBMIT:       Copier le signalement
+
+REPORT_PAYLOAD_TITLE:      Signalement miniature introuvable
+REPORT_PAYLOAD_PSEUDO:     Pseudo: {PSEUDO}
+REPORT_PAYLOAD_PROGRESS:   Progression: {F}/{T} cueillies, {R} restantes
+REPORT_PAYLOAD_EMPTY:      Aucun détail ajouté.
+
+REPORT_TOAST_COPIED:       Signalement copié. Tu peux le transmettre à l'organisateur.
+REPORT_TOAST_READY:        Signalement prêt. Copie-le manuellement et transmets-le à l'organisateur.
 ```
 
 ---

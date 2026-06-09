@@ -291,6 +291,7 @@
     .my-card{background:linear-gradient(135deg,rgba(255,61,138,.08),var(--surface));border:1px solid rgba(255,61,138,.22);border-radius:16px;padding:14px 16px;margin-bottom:12px;position:relative}
     .my-card-rank{position:absolute;top:12px;right:14px;font-size:1.5rem}
     .my-card-pseudo{font-size:1.05rem;font-weight:800;color:var(--ink);margin-bottom:2px}
+    .moi-progress{margin:2px 0 10px;font-family:var(--mono);font-size:0.74rem;color:var(--ink-2);line-height:1.35}
     .my-card-sub{font-size:0.78rem;color:var(--ink-2);margin-bottom:10px;font-family:var(--mono)}
     .my-card-stats{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
     .my-card-stats strong{font-size:1.1rem;color:var(--ink)}
@@ -326,6 +327,16 @@
     .version-lock-box{background:var(--surface);border-radius:22px;padding:24px 18px;width:100%;max-width:420px;text-align:center;border:1px solid rgba(248,113,113,.28);box-shadow:0 0 0 1px rgba(248,113,113,.12),0 8px 40px rgba(26,24,38,.18)}
     .version-lock-copy{font-size:0.9rem;color:var(--ink-2);line-height:1.45;margin:10px 0 12px}
     .version-lock-meta{font-family:var(--mono);font-size:0.8rem;color:var(--ink-3);margin:2px 0 4px}
+    /* ── Missing flash report ── */
+    #missingFlashReport{display:none;position:fixed;inset:0;z-index:3300;align-items:center;justify-content:center;padding:18px;background:rgba(5,6,16,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+    #missingFlashReport.open{display:flex}
+    .missing-report-card{width:min(100%,420px);background:var(--surface);border:1px solid rgba(255,61,138,.18);border-radius:20px;padding:18px;box-shadow:0 12px 40px rgba(26,24,38,.18)}
+    .missing-report-title{font-size:1rem;font-weight:800;color:var(--ink);margin-bottom:6px;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.06em}
+    .missing-report-copy{font-size:0.85rem;color:var(--ink-2);line-height:1.45;margin-bottom:12px}
+    #missingFlashReportText{width:100%;min-height:120px;border:1px solid var(--line-2);border-radius:14px;padding:12px 14px;font-family:var(--display);font-size:0.92rem;color:var(--ink);background:var(--bg);resize:vertical}
+    #missingFlashReportText:focus{outline:none;border-color:var(--magenta);box-shadow:0 0 0 3px rgba(255,61,138,.14)}
+    .missing-report-actions{display:flex;gap:10px;margin-top:12px}
+    .missing-report-actions > *{flex:1}
     /* ── Boutons carte ── */
     #arrowToggleBtn{min-height:48px!important;min-width:48px!important;padding:10px 16px!important;font-size:0.8rem!important;font-weight:700!important;transition:transform .1s}
     #arrowToggleBtn:active{transform:scale(0.9)}

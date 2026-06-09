@@ -273,15 +273,11 @@ function updateRadar() {
     return;
   }
 
-  // GPS accuracy warning
-  const accStr = playerAccuracy ? ` · GPS ±${Math.round(playerAccuracy)}m` : '';
-
   if (activeGameMode === 'unique') {
     const { availableCount, nearest } = _getNearestAvailableUniqueForPlayer();
 
     if (!availableCount || !nearest) {
-      const guideText = document.getElementById('modeGuideText');
-      if (guideText) guideText.textContent = copy('GUIDE_FLASH_SOUS_ZERO', 'Aucune miniature disponible pour le moment');
+      if (typeof updateCollectionProgress === 'function') updateCollectionProgress();
       bar.textContent = '';
       bar.className = '';
       bar.style.display = 'none';
@@ -294,14 +290,8 @@ function updateRadar() {
     }
 
     const nearestU = nearest;
-    const available = availableCount;
-    const cStr = available === 1 ? '⚡ 1 trésor dispo' : `⚡ ${available} trésors dispos`;
 
-    // Update guide bar count
-    const guideText = document.getElementById('modeGuideText');
-    if (guideText) guideText.textContent = available === 1
-      ? copy('GUIDE_FLASH_SOUS_SOLO', 'Plus qu\'une miniature à trouver')
-      : copy('GUIDE_FLASH_SOUS_MULTI', '{N} miniatures à cueillir · sois le premier !').replace('{N}', String(available));
+    if (typeof updateCollectionProgress === 'function') updateCollectionProgress();
 
     const flashFab = document.getElementById('flashFab');
     const accForFlash = Math.max(0, Math.round(playerAccuracy || 0));
@@ -313,13 +303,13 @@ function updateRadar() {
 
     if (inFlashCaptureZone) {
       // Two-state UX: inside displayed search circle => scan is available.
-      bar.style.display = 'block';
-      bar.textContent = `${cStr} · ${copy('FLASH_RADAR_SCAN', '📷 Tu peux scanner le QR maintenant.')}${accStr}`;
-      bar.className = 'very-near';
+      bar.textContent = '';
+      bar.className = '';
+      bar.style.display = 'none';
       flashCaptureStickyId = nearestU.t.id;
       nearestUnique = nearestU.t;
       flashFab.style.display = 'flex';
-      if (nearestU.t.photo_url) showFlashHint(nearestU.t, 'Scanne le QR pour valider.');
+      if (nearestU.t.photo_url) showFlashHint(nearestU.t, copy('FLASH_RADAR_SCAN', '📷 Tu peux scanner le QR maintenant.'));
       if (lastHapticZone !== 'unique-capture') { lastHapticZone = 'unique-capture'; haptic([100, 50, 100, 50, 200]); }
     } else {
       // Outside the circle: no radar indication, keep only map/ring guidance.
@@ -342,15 +332,16 @@ function showFlashHint(t, sub) {
   const photoEl = document.getElementById('flashHintPhoto');
   const subEl = document.getElementById('flashHintSub');
   const url = safeImgUrl(getPhotoUrls(t.photo_url)[0]);
+  const openPhoto = (ev) => {
+    if (ev) ev.stopPropagation();
+    if (url) openPhotoViewer(url);
+  };
   if (url) {
     photoEl.src = url;
     photoEl.style.display = 'block';
     photoEl.style.pointerEvents = 'auto';
     photoEl.style.cursor = 'zoom-in';
-    photoEl.onclick = (ev) => {
-      ev.stopPropagation();
-      openPhotoViewer(url);
-    };
+    photoEl.onclick = openPhoto;
     photoEl.alt = `Aperçu de ${tLabel(t)} (toucher pour agrandir)`;
   } else {
     photoEl.style.display = 'none';
@@ -362,6 +353,8 @@ function showFlashHint(t, sub) {
   subEl.textContent = sub;
   hint.classList.remove('quest-mode');
   hint.classList.add('active');
+  hint.style.cursor = url ? 'zoom-in' : 'default';
+  hint.onclick = url ? openPhoto : null;
   clearTimeout(hint._autoHide);
 }
 

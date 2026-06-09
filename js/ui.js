@@ -17,6 +17,8 @@ window.addEventListener('beforeunload', () => {
   if (geoWatchdog) { clearInterval(geoWatchdog); geoWatchdog = null; }
 });
 
+const _uiCopy = (key, fallback = '') => (window.u3dqCopyText ? window.u3dqCopyText(key, fallback) : fallback);
+
 // ── Tabs ─────────────────────────────────────────────
 function showTab(name, btn) {
   activeTab = name;
@@ -41,6 +43,7 @@ function showTab(name, btn) {
     startCompassInterval();
     updateProgressBar();
     updateRadar();
+    updateCollectionProgress();
     _updateRadarBg();
     applyExploreMapLock();
     applyMapHeadingRotation();
@@ -66,6 +69,81 @@ function showTab(name, btn) {
     _clearArrows();
     _updateRadarBg();
     updateCompassCorner();
+  }
+}
+
+function _getFlashCollectionStats() {
+  const allUnique = Array.isArray(treasures) ? treasures.filter(t => t && t.type === 'unique') : [];
+  const total = allUnique.length;
+  const found = myPseudo
+    ? allUnique.filter(t => t.found_by && t.found_by.split(',').includes(myPseudo)).length
+    : allUnique.filter(t => t.found_by && t.found_by.length > 0).length;
+  const remaining = Math.max(0, total - found);
+  return { total, found, remaining };
+}
+
+function updateCollectionProgress() {
+  const guideTitle = document.getElementById('modeGuideTitle');
+  const guideText = document.getElementById('modeGuideText');
+  if (!guideTitle || !guideText) return;
+  const stats = _getFlashCollectionStats();
+  guideTitle.textContent = _uiCopy('GUIDE_FLASH_TITRE', 'Progression');
+  const tpl = _uiCopy('GUIDE_PROGRESS_TEMPLATE', '{R} restantes · {F}/{T} cueillies');
+  guideText.textContent = tpl
+    .replace('{R}', String(stats.remaining))
+    .replace('{F}', String(stats.found))
+    .replace('{T}', String(stats.total));
+}
+
+function openMissingFlashReport() {
+  const box = document.getElementById('missingFlashReport');
+  const input = document.getElementById('missingFlashReportText');
+  const title = document.getElementById('missingReportTitle');
+  const copy = document.getElementById('missingReportCopy');
+  const cancelBtn = document.getElementById('missingReportCancelBtn');
+  const submitBtn = document.getElementById('missingReportSubmitBtn');
+  if (!box) return;
+  if (title) title.textContent = _uiCopy('REPORT_MODAL_TITLE', 'Signaler une miniature introuvable');
+  if (copy) copy.textContent = _uiCopy('REPORT_MODAL_COPY', 'Décris brièvement le problème et on le transmet à l\'organisateur.');
+  if (input) input.placeholder = _uiCopy('REPORT_MODAL_PLACEHOLDER', 'Ex: QR absent, photo introuvable, trésor déplacé...');
+  if (cancelBtn) cancelBtn.textContent = _uiCopy('REPORT_MODAL_CANCEL', 'Annuler');
+  if (submitBtn) submitBtn.textContent = _uiCopy('REPORT_MODAL_SUBMIT', 'Copier le signalement');
+  box.classList.add('open');
+  if (input) input.focus();
+}
+
+function closeMissingFlashReport() {
+  const box = document.getElementById('missingFlashReport');
+  if (box) box.classList.remove('open');
+}
+
+async function submitMissingFlashReport() {
+  const input = document.getElementById('missingFlashReportText');
+  const report = String(input?.value || '').trim();
+  const stats = _getFlashCollectionStats();
+  const payloadTitle = _uiCopy('REPORT_PAYLOAD_TITLE', 'Signalement miniature introuvable');
+  const payloadPseudo = _uiCopy('REPORT_PAYLOAD_PSEUDO', 'Pseudo: {PSEUDO}').replace('{PSEUDO}', myPseudo || 'Invité');
+  const payloadProgress = _uiCopy('REPORT_PAYLOAD_PROGRESS', 'Progression: {F}/{T} cueillies, {R} restantes')
+    .replace('{F}', String(stats.found))
+    .replace('{T}', String(stats.total))
+    .replace('{R}', String(stats.remaining));
+  const lines = [
+    payloadTitle,
+    payloadPseudo,
+    payloadProgress,
+    report || _uiCopy('REPORT_PAYLOAD_EMPTY', 'Aucun détail ajouté.')
+  ];
+  const payload = lines.join('\n');
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(payload);
+      _checkinError(_uiCopy('REPORT_TOAST_COPIED', 'Signalement copié. Tu peux le transmettre à l\'organisateur.'));
+    } else {
+      _checkinError(_uiCopy('REPORT_TOAST_READY', 'Signalement prêt. Copie-le manuellement et transmets-le à l\'organisateur.'));
+    }
+  } finally {
+    closeMissingFlashReport();
+    if (input) input.value = '';
   }
 }
 
@@ -518,6 +596,7 @@ async function loadMoi() {
   if (!el) return;
   const unique = treasures.filter(t => t.type === 'unique');
   const myUnique = unique.filter(t => t.found_by && t.found_by.split(',').includes(myPseudo)).length;
+  const stats = _getFlashCollectionStats();
 
   // Fetch rank from leaderboard
   let rank = '—';
@@ -535,9 +614,14 @@ async function loadMoi() {
 
   const pseudo = myPseudo || 'Invité';
   const grad = pseudoGradient(pseudo);
+  const progressTpl = _uiCopy('COMPTE_PROGRESS_TEMPLATE', '{F} trouvées sur {T} · {R} restantes');
   el.innerHTML = `
     <div class="moi-avatar" style="background:${grad}">${escHtml(pseudo.charAt(0))}</div>
     <div class="moi-pseudo">${escHtml(pseudo)}</div>
+    <div class="moi-progress">${escHtml(progressTpl
+      .replace('{F}', String(stats.found))
+      .replace('{T}', String(stats.total))
+      .replace('{R}', String(stats.remaining)))}</div>
     <div class="moi-grid">
       <div class="moi-tile"><div class="moi-tile-val">${myUnique}</div><div class="moi-tile-lbl">Flash</div></div>
       <div class="moi-tile"><div class="moi-tile-val">${unique.length}</div><div class="moi-tile-lbl">Disponibles</div></div>
@@ -559,6 +643,9 @@ async function loadMoi() {
       <button class="moi-logout" id="logoutBtn">Se déconnecter</button>
     ` : '';
   }
+
+  const reportBtn = document.getElementById('reportMissingBtn');
+  if (reportBtn) reportBtn.textContent = _uiCopy('COMPTE_REPORT_CTA', 'Signaler une miniature introuvable');
 
   const hapticToggle = document.getElementById('hapticToggleInput');
   if (hapticToggle) {

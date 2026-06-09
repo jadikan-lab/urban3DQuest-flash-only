@@ -77,6 +77,7 @@ async function _tryProcessFindSecure(t) {
   renderMarkers();
   updateHeader();
   updateRadar();
+  if (typeof updateCollectionProgress === 'function') updateCollectionProgress();
   updateProgressBar();
 
   haptic([80, 40, 160]);

@@ -3,6 +3,11 @@ let bgMap = null;
 let accessGateRequired = false;
 let accessGateUnlocked = false;
 
+function getAccessGateStorageKey(code) {
+  const normalized = String(code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return normalized ? `u3dq_access_gate_${normalized}` : '';
+}
+
 function normalizePseudo(raw) {
   return String(raw || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
 }
@@ -32,6 +37,8 @@ function showAccessGate() {
 
 function unlockAccessGate() {
   accessGateUnlocked = true;
+  const gateKey = getAccessGateStorageKey(gameCode);
+  if (gateKey) localStorage.setItem(gateKey, '1');
   _setLoginFieldsVisibility(true);
   const startBtn = document.getElementById('startBtn');
   const subtitle = document.querySelector('.ps-sub');
@@ -88,7 +95,16 @@ async function loadLandingAccessGateConfig() {
 
     const rawCode = String(data?.value || '').trim().toUpperCase();
     gameCode = rawCode.replace(/[^A-Z0-9]/g, '');
-    if (gameCode) showAccessGate();
+    if (gameCode) {
+      accessGateRequired = true;
+      const gateKey = getAccessGateStorageKey(gameCode);
+      if (gateKey && localStorage.getItem(gateKey) === '1') {
+        accessGateUnlocked = true;
+        _setLoginFieldsVisibility(true);
+      } else {
+        showAccessGate();
+      }
+    }
   } catch {
     // Keep landing usable even if config read fails.
   }
@@ -259,6 +275,8 @@ async function continueAsGuest() {
   if (gameCode) {
     const entered = (document.getElementById('gameCodeInput').value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
     if (entered !== gameCode) { err.textContent = 'Code d\'accès incorrect.'; err.style.display = 'block'; return; }
+    const gateKey = getAccessGateStorageKey(gameCode);
+    if (gateKey) localStorage.setItem(gateKey, '1');
   }
   err.style.display = 'none';
   hideLanding();

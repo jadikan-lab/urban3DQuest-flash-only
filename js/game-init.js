@@ -45,6 +45,7 @@ async function initGame(pendingFoundId) {
 
   // Load treasures & init map
   await loadTreasures();
+    if (typeof updateCollectionProgress === 'function') updateCollectionProgress();
   initMap();
   if (realtimeEnabled) ensureGameRealtimeSync();
   batterySaverMode = !!localStorage.getItem('u3dq_bsaver');
@@ -163,16 +164,14 @@ function updateModeUI() {
   }
 
   if (guideTitle && guideText) {
-    guideTitle.textContent = copy('GUIDE_FLASH_TITRE', 'Mode Flash');
-    const flashCount = Array.isArray(treasures)
-      ? treasures.filter(x => x.type === 'unique' && !(x.found_by && x.found_by.length > 0) && !(myPseudo && (x.found_by || '').split(',').includes(myPseudo))).length
-      : 0;
-    if (flashCount <= 0) {
-      guideText.textContent = copy('GUIDE_FLASH_SOUS_ZERO', 'Aucune miniature disponible pour le moment');
-    } else if (flashCount === 1) {
-      guideText.textContent = copy('GUIDE_FLASH_SOUS_SOLO', 'Plus qu\'une miniature à trouver');
+    if (typeof updateCollectionProgress === 'function') {
+      updateCollectionProgress();
     } else {
-      guideText.textContent = copy('GUIDE_FLASH_SOUS_MULTI', '{N} miniatures à cueillir · sois le premier !').replace('{N}', String(flashCount));
+      guideTitle.textContent = copy('GUIDE_FLASH_TITRE', 'Progression');
+      guideText.textContent = copy('GUIDE_PROGRESS_TEMPLATE', '{R} restantes · {F}/{T} cueillies')
+        .replace('{R}', '0')
+        .replace('{F}', '0')
+        .replace('{T}', '0');
     }
   }
 }

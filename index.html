@@ -69,8 +69,8 @@
 </nav>
 <div id="modeQuickGuide">
   <div id="modeGuideCopy">
-    <strong id="modeGuideTitle">Mode Flash</strong>
-    <span id="modeGuideText">Miniatures uniques à cueillir en premier</span>
+    <strong id="modeGuideTitle">Progression</strong>
+    <span id="modeGuideText">0 restantes · 0/0 cueillies</span>
   </div>
 </div>
 
@@ -135,6 +135,7 @@
   </div>
   <div id="carnetList"></div>
   <div id="moiActions" class="moi-actions"></div>
+  <button id="reportMissingBtn" class="btn-ghost" style="width:100%;margin-top:10px;font-size:0.8rem;opacity:0.85" onclick="openMissingFlashReport()">Signaler une miniature introuvable</button>
 </div>
 
 <!-- ── Treasure sheet ────────────────────────────────── -->
@@ -264,6 +265,19 @@
     <p class="version-lock-meta">Version actuelle: <strong id="versionLockCurrent">-</strong></p>
     <p class="version-lock-meta">Version minimum: <strong id="versionLockRequired">-</strong></p>
     <button class="btn-primary" onclick="retryVersionRefresh()">Mettre a jour maintenant</button>
+  </div>
+</div>
+
+<div id="missingFlashReport">
+  <div class="missing-report-backdrop" onclick="closeMissingFlashReport()"></div>
+  <div class="missing-report-card">
+    <div class="missing-report-title" id="missingReportTitle">Signaler une miniature introuvable</div>
+    <p class="missing-report-copy" id="missingReportCopy">Décris brièvement le problème et on le transmet à l'organisateur.</p>
+    <textarea id="missingFlashReportText" maxlength="600" placeholder="Ex: QR absent, photo introuvable, trésor déplacé..."></textarea>
+    <div class="missing-report-actions">
+      <button class="btn-ghost" id="missingReportCancelBtn" onclick="closeMissingFlashReport()">Annuler</button>
+      <button class="btn-primary" id="missingReportSubmitBtn" onclick="submitMissingFlashReport()">Copier le signalement</button>
+    </div>
   </div>
 </div>
 
