@@ -1,0 +1,9 @@
+supabase/.temp/
+node_modules/
+.DS_Store
+
+# Local one-off artifacts (keep out of gameplay commits)
+/player-visible-texts-export.md
+/fix_instinct.js
+/scanner.js
+/backups/*.bundle
