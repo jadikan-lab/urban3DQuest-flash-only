@@ -163,7 +163,6 @@ let orientationListenersAttached = false;
 let compassVisualAngle = null;
 let mapVisualAngle = null;
 let mapCenter    = [45.1885, 5.7245]; // default Grenoble, overridden by config
-let activeQuests = [];  // empty = all quests visible
 let gameStart    = null;  // Date or null — reference timestamp for score calc
 let gameCode     = '';    // empty = open access
 let egressEmergencyMode = false; // true = reduce heavy public reads during incidents
@@ -195,7 +194,7 @@ let accuracyCircle  = null; // GPS accuracy circle on miniMap
 let lastHapticZone  = null;
 let hapticEnabled = localStorage.getItem('u3dq_haptic_enabled') === '1';
 let directionLayers = []; // arrow markers on minimap
-let compassArrowMode = true; // toggle: show direction arrows on minimap
+let compassArrowMode = false;
 let mapFollowing = true; // true = map follows GPS, false = user is panning freely
 let lastArrowLat = null, lastArrowLng = null, lastArrowHeading = null; // throttle
 const ARROW_PALETTE = ['#f472b6', '#fb923c', '#22d3ee', '#a78bfa', '#4ade80'];

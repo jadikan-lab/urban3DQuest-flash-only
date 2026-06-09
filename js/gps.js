@@ -71,17 +71,15 @@ function _onGeoSuccess(pos) {
       playerMarker.setLatLng(pos2);
     }
     if (activeTab === 'explore') {
-      if (activeGameMode === 'fixed') mapFollowing = true;
       if (mapFollowing) gameMap.setView(pos2, gameMap.getZoom(), { animate: true });
     }
   }
 
   updateRadar();
-  updateNearestCard();
   applyMapHeadingRotation();
   scheduleCompassRender(true);
   updateGpsLoadingPanel();
-  // Force immediate arrow draw on first GPS fix (don't wait for compass interval)
+  // Force immediate visual refresh on first GPS fix.
   if (firstFix) scheduleCompassRender(true);
 }
 

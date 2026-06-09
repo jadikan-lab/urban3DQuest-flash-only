@@ -50,9 +50,6 @@ function initMap() {
   const dot = document.createElement('div'); dot.id = 'radarCenterDot'; radarBg.appendChild(dot);
   const centerLabel = document.createElement('div'); centerLabel.id = 'radarCenterLabel'; centerLabel.textContent = 'VOUS'; radarBg.appendChild(centerLabel);
   mapEl.appendChild(radarBg);
-  const ov = document.createElement('div');
-  ov.id = 'arrowOverlay';
-  mapEl.appendChild(ov);
   gameMap.on('dragstart', function() {
     mapFollowing = false;
     var btn = document.getElementById('locateMeBtn');

@@ -44,10 +44,6 @@ NAV_SCORES:         Scores
 > Pour Flash, `{N}` = nombre de miniatures encore disponibles.
 
 ```
-GUIDE_QUETE_TITRE:       Mode Quête
-GUIDE_QUETE_SOUS:        Approche-toi pour révéler les balises fixes
-GUIDE_QUETE_SOUS_ZERO:   Aucune balise disponible pour le moment
-
 GUIDE_FLASH_TITRE:       Mode Flash
 GUIDE_FLASH_SOUS_ZERO:   Aucune miniature disponible pour le moment
 GUIDE_FLASH_SOUS_SOLO:   Plus qu'une miniature à trouver
@@ -62,24 +58,10 @@ GUIDE_FLASH_SOUS_MULTI:  {N} miniatures à cueillir · sois le premier !
 TUTO_MINI_TITRE:    Mode Flash
 TUTO_MINI_INTRO:    Repère une miniature proche puis scanne son QR.
 TUTO_MINI_CARD_TITRE: Rappel rapide
-TUTO_MINI_CARD_TEXTE: Approche-toi, ouvre le scan, capture avant les autres.
+TUTO_MINI_CARD_TEXTE: Approche-toi, trouve la miniature avant les autres.
 TUTO_MINI_GPS_BTN:  Activer GPS
 TUTO_MINI_CLOSE_BTN: Fermer
 TUTO_MINI_NOTE:     Aide optionnelle.
-```
-
----
-
-## BARRE DE PROXIMITÉ — Mode Quête
-
-> Textes qui apparaissent dans la barre en bas de la carte selon la distance à la balise la plus proche.
-
-```
-QUETE_RADAR_TRES_LOIN:    Une balise se cache dans ce quartier…
-QUETE_RADAR_LOIN:         Tu chauffes — il est tout près.
-QUETE_RADAR_SCAN:         Tu es dans la bonne zone: prends le QR en photo.
-QUETE_RADAR_GPS_INSTABLE: ⚠️ GPS instable (±{A}m), avance en zone dégagée.
-QUETE_RADAR_INDICE:       Voilà ce que tu cherches — tu es dans la zone !
 ```
 
 ---
@@ -92,66 +74,6 @@ QUETE_RADAR_INDICE:       Voilà ce que tu cherches — tu es dans la zone !
 FLASH_COUNT_ONE:          ⚡ 1 miniature dispo
 FLASH_COUNT_MULTI:        ⚡ {N} miniatures dispos
 FLASH_RADAR_IN_ZONE:      ⚡ Dans la zone — trouve la miniature
-```
-
----
-
-## MODAL DE RÉSULTAT — Quête (1ère révélation)
-
-```
-QUETE_FIRST_LABEL:  PREMIÈRE RÉVÉLATION
-QUETE_FIRST_TITRE:  La chasse commence !
-QUETE_FIRST_DESC:   Le chrono est lancé. Révèle les {N} autres balises le plus vite possible.
-```
-
----
-
-## MODAL DE RÉSULTAT — Quête (milieu de partie, rotation)
-
-> Ces messages s'affichent en rotation selon le nombre déjà trouvés.
-
-```
-MID_1_LABEL:   RÉVÉLÉ
-MID_1_TITRE:   Balise révélé.
-MID_1_DESC:    Continue, il t'en reste {N}.
-
-MID_2_LABEL:   EN ROUTE
-MID_2_TITRE:   Belle trouvaille.
-MID_2_DESC:    {N} balises t'attendent encore.
-
-MID_3_LABEL:   TROUVÉ
-MID_3_TITRE:   Tu as l'œil.
-MID_3_DESC:    Plus que {N} en attente.
-
-MID_4_LABEL:   MARQUÉ
-MID_4_TITRE:   Dans la boîte.
-MID_4_DESC:    {N} restants. Ne ralentis pas.
-
-MID_5_LABEL:   EN CHASSE
-MID_5_TITRE:   La quête avance.
-MID_5_DESC:    {N} balises à révéler.
-```
-
----
-
-## MODAL DE RÉSULTAT — Quête (fin de partie)
-
-```
-QUETE_3_LABEL:   BON RYTHME
-QUETE_3_TITRE:   Encore trois à trouver.
-QUETE_3_DESC:    La fin approche. Reste concentré.
-
-QUETE_2_LABEL:   EN FEU
-QUETE_2_TITRE:   Il n'en reste plus que deux.
-QUETE_2_DESC:    Tu y es presque. Ne lâche rien.
-
-QUETE_1_LABEL:   PRESQUE !
-QUETE_1_TITRE:   Plus qu'un !
-QUETE_1_DESC:    Une seule Balise te sépare de la fin. Tout se joue maintenant.
-
-QUETE_0_LABEL:   BALISE TROUVÉE
-QUETE_0_TITRE:   Balise révélée !
-QUETE_0_DESC:    Incroyable ! Ta quête est complète !
 ```
 
 ---
@@ -188,7 +110,6 @@ QR_STATUS_WRONG_TREASURE: ⚠️ Mauvais polaroid — cherche le bon !
 QR_STATUS_WRONG_TREASURE_DETAIL: ⚠️ Mauvais QR: détecté {SCANNED}. Cherche {EXPECTED}.
 QR_STATUS_CAPTURED: ✅ Polaroid révélé !
 QR_STATUS_CAMERA_BLOCKED: ⚠️ Caméra bloquée. Autorise la caméra puis utilise la photo de secours.
-QR_TARGET_FIXED:   Balise {N} de la quête
 QR_TARGET_FLASH:   Miniature Flash
 QR_TARGET_FLASH_REF: QR-00X
 QR_PHOTO_CTA:      📷 Prendre la photo
@@ -210,31 +131,6 @@ FLASH_ALREADY_TITRE:   Tu as déjà flashé ce polaroid.
 
 ---
 
-## ÉCRAN COMPLÉTION — Mode Quête
-
-> S'affiche quand toutes les balises fixes sont trouvées.
-
-```
-COMPLETE_TITRE:   Série complète.
-COMPLETE_STATS_POLAROIDS:  Polaroids
-COMPLETE_STATS_TEMPS:      Temps
-COMPLETE_STATS_RANG:       Rang
-COMPLETE_SHARE:   📤 Partager
-COMPLETE_CTA:     Continuer
-```
-
----
-
-## BARRE DE PROGRESSION — Mode Quête uniquement
-
-> S'affiche en bas de l'écran uniquement dans l'onglet Quête (pas en Compte ni Scores).
-
-```
-PROGRES_LABEL:    📷 Balises trouvées
-```
-
----
-
 ## ONGLET COMPTE
 
 ```
@@ -248,7 +144,7 @@ COMPTE_VIDE:              Aucune miniature trouvée pour l'instant
 ## MESSAGES DE RETOUR (toast bienvenue)
 
 ```
-RETOUR_MESSAGE:   Bon retour {PSEUDO} ! Il te reste {N} balise{S} à trouver.
+RETOUR_MESSAGE_FLASH:   Bon retour {PSEUDO} ! Il reste {N} flash a capturer.
 ```
 
 ---

@@ -21,11 +21,7 @@ function _isMissingSecureFindRpcError(error) {
 }
 
 function _isTreasureAllowedInActiveScope(treasure) {
-  if (!treasure) return false;
-  if (!Array.isArray(activeQuests) || activeQuests.length === 0) return true;
-  const quest = String(treasure.quest || '').trim();
-  // Keep unassigned treasures available across instances, same rule as loadTreasures().
-  return !quest || activeQuests.includes(quest);
+  return !!treasure;
 }
 
 async function _tryProcessFindSecure(t, foundCountBefore) {

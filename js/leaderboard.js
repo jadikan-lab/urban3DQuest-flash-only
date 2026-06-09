@@ -28,13 +28,8 @@ async function _fetchLeaderboardData() {
 function _computeLeaderboardScores(events, cfg) {
   const totalFixed = 0;
 
-  const activeQuestIds = (activeQuests && activeQuests.length > 0 && treasures.length > 0)
-    ? new Set(treasures.filter(t => activeQuests.includes(t.quest)).map(t => t.id))
-    : null;
-  const filteredEvents = activeQuestIds ? events.filter(e => activeQuestIds.has(e.treasure_id)) : events;
-
   const players = {};
-  filteredEvents.forEach(e => {
+  events.forEach(e => {
     if (!e.pseudo) return;
     if (!players[e.pseudo]) players[e.pseudo] = { flashEvents: [] };
     if (e.treasure_type === 'unique') players[e.pseudo].flashEvents.push(e);

@@ -22,8 +22,6 @@ async function initGame(pendingFoundId) {
     if (c.modeMap !== undefined)     modeMap     = c.modeMap !== 'false';
     if (c.modeCompass !== undefined) modeCompass = c.modeCompass !== 'false';
     if (c.gameActive === 'false') showPause();
-    if (c.activeQuests) { try { activeQuests = JSON.parse(c.activeQuests); } catch { activeQuests = []; } }
-    else if (c.activeQuest) { activeQuests = c.activeQuest ? [c.activeQuest] : []; }
     if (c.mapCenter) {
       const parts = c.mapCenter.split(',').map(Number);
       if (parts.length === 2 && !isNaN(parts[0])) mapCenter = parts;
@@ -212,7 +210,6 @@ function setGameMode(mode) {
   document.body.classList.toggle('flash-mode', activeGameMode === 'unique');
   updateModeUI();
   updateRadar();
-  updateNearestCard();
   updateProgressBar();
   // Flash-only: never show quest progression block.
   if (activeTab === 'moi') {
@@ -315,11 +312,7 @@ async function loadTreasures() {
   }
   if (!data) return;
   // Flash-only fork: keep only unique treasures.
-  if (activeQuests.length) {
-    treasures = data.filter(t => t.type === 'unique' && (!t.quest || activeQuests.includes(t.quest)));
-  } else {
-    treasures = data.filter(t => t.type === 'unique');
-  }
+  treasures = data.filter(t => t.type === 'unique');
   // Detect flash treasures taken by someone else while we were nearby
   if (_prevAvailableFlash.size > 0 && playerLat !== null && activeGameMode === 'unique') {
     const newlyTaken = treasures.filter(t =>

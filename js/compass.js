@@ -271,60 +271,7 @@ function updateCompass() {
         s.style.top = cy + 'px';
       });
 
-      if (compassArrowMode && activeGameMode === 'unique') {
-        const uniquePlaced = treasures
-          .filter(t => t.type === 'unique')
-          .filter(t => Number.isFinite(t.lat) && Number.isFinite(t.lng))
-          .filter(t => t.visible !== false)
-          .filter(t => !(t.found_by && t.found_by.length > 0))
-          .map(t => ({ ...t, dist: haversine(playerLat, playerLng, t.lat, t.lng) }))
-          .sort((a, b) => a.dist - b.dist)
-          .slice(0, MAX_UNIQUE_ARROWS);
-
-        uniquePlaced.forEach((t, idx) => {
-          const absBearing = bearingTo(playerLat, playerLng, t.lat, t.lng);
-          // Keep arrows in screen coordinates so they always point toward the target
-          // even while the map/radar rotate with the device heading.
-          const relBearing = (absBearing - (deviceHeading || 0) + 360) % 360;
-          const color   = ARROW_PALETTE[idx % ARROW_PALETTE.length];
-          const distStr = t.dist < 1000 ? `${Math.round(t.dist)}m` : `${(t.dist/1000).toFixed(1)}km`;
-          const inRange = t.dist <= proximityR;
-          const rad     = relBearing * Math.PI / 180;
-          const x       = cx + R * Math.sin(rad);
-          let y         = cy - R * Math.cos(rad);
-          y = Math.max(38, Math.min(mapElC.offsetHeight - 82, y));
-
-          const div = document.createElement('div');
-          div.className = 'dir-arrow';
-          div.style.left = x + 'px';
-          div.style.top  = y + 'px';
-          div.innerHTML = `
-            <svg width="44" height="54" viewBox="0 0 44 54" xmlns="http://www.w3.org/2000/svg"
-                 style="transform:rotate(${relBearing}deg);transform-origin:50% 72%;filter:drop-shadow(0 2px 8px rgba(0,0,0,.7));display:block">
-              <polygon points="22,2 38,40 22,28 6,40" fill="${color}" stroke="#0f172a" stroke-width="3"/>
-            </svg>
-          `;
-          div.addEventListener('click', () => {
-            openTreasureSheet(t);
-          });
-          overlay.appendChild(div);
-          // Label pushed further along the same axis to avoid overlap
-          const labelR = Math.min(R + 70, Math.min(mapElC.offsetWidth, mapElC.offsetHeight) * 0.47);
-          const lx = cx + labelR * Math.sin(rad);
-          const ly = cy - labelR * Math.cos(rad);
-          const lbl = document.createElement('div');
-          lbl.className = 'dir-arrow-label';
-          lbl.style.left = Math.max(28, Math.min(mapElC.offsetWidth - 28, lx)) + 'px';
-          lbl.style.top  = Math.max(16, Math.min(mapElC.offsetHeight - 16, ly)) + 'px';
-          lbl.style.color = color;
-          lbl.style.borderColor = color;
-          lbl.textContent = distStr + (inRange ? ' ✓' : '');
-          lbl.addEventListener('click', () => {
-            openTreasureSheet(t);
-          });
-          overlay.appendChild(lbl);
-        });
-      }
+      // Direction arrows removed in flash-only: interaction is zone entry + scan only.
     }
   }
 }
@@ -333,17 +280,7 @@ function updateCompass() {
 
 // ── Compass UI controls ─────────────────────────────
 function toggleCompassArrows() {
-  compassArrowMode = !compassArrowMode;
-  const btn = document.getElementById('arrowToggleBtn');
-  if (btn) {
-    btn.style.borderColor = compassArrowMode ? '#3b82f6' : '#334155';
-    btn.style.color       = compassArrowMode ? '#93c5fd' : '#94a3b8';
-    btn.style.background  = compassArrowMode ? 'rgba(30,58,138,.88)' : 'rgba(15,23,42,.88)';
-  }
-  // Clear and redraw immediately by resetting throttle
-  lastArrowLat = null; lastArrowLng = null; lastArrowHeading = null;
-  _clearArrows();
-  updateCompass();
+  compassArrowMode = false;
 }
 
 function toggleCompassDebug() {

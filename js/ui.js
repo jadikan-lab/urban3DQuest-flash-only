@@ -387,10 +387,7 @@ function scheduleLeaderboardRefresh(delayMs = 0) {
 }
 
 function _isTreasureInActiveScope(t) {
-  if (!t) return false;
-  if (!Array.isArray(activeQuests) || activeQuests.length === 0) return true;
-  const quest = String(t.quest || '').trim();
-  return !quest || activeQuests.includes(quest);
+  return !!t;
 }
 
 function applyTreasureRealtimePayload(payload) {
@@ -418,7 +415,6 @@ function applyTreasureRealtimePayload(payload) {
   renderMarkers();
   if (activeTab === 'explore') {
     updateRadar();
-    updateNearestCard();
   }
   updateProgressBar();
   return true;
@@ -467,44 +463,6 @@ function refreshGameStateManually() {
   _setOfflineBanner(false);
   loadTreasures();
   if (activeTab === 'scores') loadLeaderboard();
-}
-
-// ── Nearest list ─────────────────────────────────────
-let _nearestTreasure = null;
-function updateNearestCard() {
-  const el = document.getElementById('nearestList');
-  if (playerLat === null) { el.style.display = 'none'; return; }
-  const pool = treasures
-    .filter(t => t.type === 'unique')
-    .filter(t => t.lat && t.lng)
-    .filter(t => !(t.found_by && t.found_by.length > 0))
-    .map(t => ({ ...t, _dist: haversine(playerLat, playerLng, t.lat, t.lng) }))
-    .sort((a, b) => a._dist - b._dist)
-    .slice(0, 4);
-
-  if (!pool.length) { el.style.display = 'none'; return; }
-
-  _nearestTreasure = pool[0];
-  const count = pool.length;
-  const header = `${count} POLAROID${count > 1 ? 'S' : ''} LES PLUS PROCHES`;
-
-  el.style.display = 'flex';
-  el.innerHTML = `<div class="nl-header">${header}</div>` +
-    pool.map((t, idx) => {
-      const color = '#db2777';
-      const dist = t._dist < 1000 ? Math.round(t._dist) + '\u202fm' : (t._dist / 1000).toFixed(1) + '\u202fkm';
-      const name = tLabel(t);
-      const shortName = name.length > 20 ? name.slice(0, 19) + '\u2026' : name;
-      const safeId = t.id.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-      return `<div class="nl-item" onclick="openTreasureSheet(treasures.find(x=>x.id==='${safeId}'))">
-        <div class="nl-dot" style="background:${color};box-shadow:0 0 6px ${color}55"></div>
-        <div class="nl-name">${escHtml(shortName)}</div>
-        <div class="nl-dist">${escHtml(dist)}</div>
-      </div>`;
-    }).join('');
-}
-function onNearestCardClick() {
-  if (_nearestTreasure) openTreasureSheet(_nearestTreasure);
 }
 
 // ── Treasure sheet ───────────────────────────────────
