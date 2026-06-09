@@ -24,9 +24,14 @@
 <!-- ── Pseudo screen ────────────────────────────────── -->
 <div id="pseudoScreen">
   <div class="ps-box">
-    <div class="ps-logo">Jadikan · Urban 3D Quest</div>
+    <div class="ps-band">
+      <span class="ps-band-tag">Mode Flash</span>
+      <span class="ps-band-note">Jadikan</span>
+    </div>
+    <div class="ps-logo">Urban 3D Quest</div>
     <div class="ps-title">Mode Flash</div>
     <p class="ps-sub">Entre ton pseudo, active le GPS, et pars en chasse.</p>
+    <div class="ps-badge">GPS requis - jeu en ville</div>
     <input type="text" id="pseudoInput" placeholder="Ton pseudo" maxlength="20" autocomplete="username" autocapitalize="characters">
     <input type="password" id="passwordInput" placeholder="MOT DE PASSE" maxlength="64" autocomplete="current-password" class="field-spaced">
     <div id="gameCodeWrap" class="field-hidden">
@@ -44,7 +49,7 @@
     <span id="gpsDot"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="5.5" stroke-width="1.8"/><circle cx="10" cy="10" r="1.8" fill="currentColor" stroke="none"/><line x1="10" y1="1" x2="10" y2="4" stroke-width="1.8"/><line x1="10" y1="16" x2="10" y2="19" stroke-width="1.8"/><line x1="1" y1="10" x2="4" y2="10" stroke-width="1.8"/><line x1="16" y1="10" x2="19" y2="10" stroke-width="1.8"/></svg></span>
     <span id="gpsLabel">GPS…</span>
   </span>
-  <button id="tutorialMiniBtn" onclick="openQuickTutorial()" aria-label="Ouvrir le tutoriel">Aide</button>
+  <button id="tutorialMiniBtn" onclick="openQuickTutorial()" aria-label="Ouvrir l'aide">Aide</button>
   <div class="brand-tag">Un jeu de <a href="https://www.instagram.com/jadikan/" target="_blank" rel="noopener noreferrer">Jadikan</a></div>
   <span class="pseudo-chip clickable" id="headerPseudo" onclick="onHeaderPseudoClick()"></span>
 </header>
@@ -67,7 +72,6 @@
     <strong id="modeGuideTitle">Mode Flash</strong>
     <span id="modeGuideText">Miniatures uniques à cueillir en premier</span>
   </div>
-  <button id="openTutorialBtn" onclick="openQuickTutorial()">Tutoriel 30s</button>
 </div>
 
 <!-- ── Explorer (carte + boussole fusionnées) ────────── -->
@@ -193,21 +197,20 @@
 <!-- ── Quick tutorial overlay ───────────────────────── -->
 <div id="quickTutorial" onclick="closeQuickTutorial(event)">
   <div id="quickTutorialCard">
-    <h3>Mode Flash unique.</h3>
-    <p>Trouve les miniatures avant les autres joueurs.</p>
+    <h3 id="qtTitle">Mode Flash</h3>
+    <p id="qtIntro">Repere une miniature proche puis scanne son QR.</p>
     <img id="qtExamplePhoto" src="" alt="Exemple de balise physique">
     <div class="qt-grid">
       <div class="qt-card">
-        <strong>Mode Flash</strong>
-        <span>Trouve les miniatures qui apparaissent sur la carte<br>Objectif : les cueillir avant les autres</span>
+        <strong id="qtCardTitle">Rappel rapide</strong>
+        <span id="qtCardText">Approche-toi, ouvre le scan, capture avant les autres.</span>
       </div>
     </div>
     <div class="qt-actions">
-      <button class="qt-btn primary" onclick="tutorialEnableGps()">1) Activer GPS</button>
-      <button class="qt-btn ghost" onclick="closeQuickTutorial()">2) Jouer maintenant</button>
+      <button class="qt-btn primary" id="qtGpsBtn" onclick="tutorialEnableGps()">Activer GPS</button>
+      <button class="qt-btn ghost" id="qtCloseBtn" onclick="closeQuickTutorial()">Fermer</button>
     </div>
-    <div class="qt-note">Active GPS puis lance la chasse.</div>
-    <div id="qtClickableTip" class="qt-note field-hidden"></div>
+    <div class="qt-note" id="qtNote">Tutoriel optionnel.</div>
   </div>
 </div>
 

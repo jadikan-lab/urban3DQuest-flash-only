@@ -28,6 +28,7 @@ LOGIN_INVITÉ:       Juste regarder d'abord
 HEADER_TITRE:       🏙 Urban 3D Quest
 HEADER_GPS_INIT:    GPS…
 HEADER_AIDE:        Aide
+HEADER_AIDE_ARIA:   Ouvrir l'aide
 HEADER_BRAND:       Un jeu de Jadikan
 NAV_QUETE:          Quête
 NAV_FLASH:          Flash
@@ -55,25 +56,16 @@ GUIDE_FLASH_SOUS_MULTI:  {N} miniatures à cueillir · sois le premier !
 
 ---
 
-## TUTORIEL / ONBOARDING
+## AIDE RAPIDE (mini-aide)
 
 ```
-TUTO_ACCROCHE:      Deux façons de jouer.
-
-TUTO_QUETE_NOM:     Mode Quête
-TUTO_QUETE_SOUS:    Des balises à trouver
-TUTO_QUETE_DESC:    Balises fixes dans la ville.
-                    Approche-toi pour scanner les QR code
-                    Objectif : toutes les trouver.
-
-TUTO_FLASH_NOM:     Mode Flash
-TUTO_FLASH_SOUS:    Trouve les miniatures Flash qui apparaissent en ville
-TUTO_FLASH_DESC:    Trouves les petits Polaroids qui apparaissent sur la carte
-                    Objectif: les cueillir avant les autres
-                    
-
-TUTO_ASTUCE:        Active GPS + compas avant de démarrer pour une meilleure fluidité.
-TUTO_ASTUCE_CLICABLE: Astuce : la flèche et le rond de la carte sont cliquables.
+TUTO_MINI_TITRE:    Mode Flash
+TUTO_MINI_INTRO:    Repère une miniature proche puis scanne son QR.
+TUTO_MINI_CARD_TITRE: Rappel rapide
+TUTO_MINI_CARD_TEXTE: Approche-toi, ouvre le scan, capture avant les autres.
+TUTO_MINI_GPS_BTN:  Activer GPS
+TUTO_MINI_CLOSE_BTN: Fermer
+TUTO_MINI_NOTE:     Aide optionnelle.
 ```
 
 ---

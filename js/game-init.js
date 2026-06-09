@@ -182,8 +182,13 @@ function updateModeUI() {
 function updateTutorialEntryPoints() {
   const bigBtn = document.getElementById('openTutorialBtn');
   const miniBtn = document.getElementById('tutorialMiniBtn');
-  if (bigBtn) bigBtn.style.display = tutorialSeen ? 'none' : 'inline-flex';
-  if (miniBtn) miniBtn.style.display = tutorialSeen ? 'inline-flex' : 'none';
+  const copy = (key, fallback = '') => (window.u3dqCopyText ? window.u3dqCopyText(key, fallback) : fallback);
+  if (bigBtn) bigBtn.style.display = 'none';
+  if (miniBtn) {
+    miniBtn.style.display = 'inline-flex';
+    miniBtn.textContent = copy('HEADER_AIDE', 'Aide');
+    miniBtn.setAttribute('aria-label', copy('HEADER_AIDE_ARIA', 'Ouvrir l\'aide'));
+  }
 }
 
 function setGameMode(mode) {
@@ -242,11 +247,22 @@ function openQuickTutorial() {
   const el = document.getElementById('quickTutorial');
   if (!el) return;
   const copy = (key, fallback = '') => (window.u3dqCopyText ? window.u3dqCopyText(key, fallback) : fallback);
-  const tip = document.getElementById('qtClickableTip');
-  if (tip) {
-    tip.textContent = copy('TUTO_ASTUCE_CLICABLE', 'Astuce : la flèche et le rond de la carte sont cliquables.');
-    tip.classList.remove('field-hidden');
-  }
+  const title = document.getElementById('qtTitle');
+  const intro = document.getElementById('qtIntro');
+  const cardTitle = document.getElementById('qtCardTitle');
+  const cardText = document.getElementById('qtCardText');
+  const gpsBtn = document.getElementById('qtGpsBtn');
+  const closeBtn = document.getElementById('qtCloseBtn');
+  const note = document.getElementById('qtNote');
+
+  if (title) title.textContent = copy('TUTO_MINI_TITRE', 'Mode Flash');
+  if (intro) intro.textContent = copy('TUTO_MINI_INTRO', 'Repere une miniature proche puis scanne son QR.');
+  if (cardTitle) cardTitle.textContent = copy('TUTO_MINI_CARD_TITRE', 'Rappel rapide');
+  if (cardText) cardText.textContent = copy('TUTO_MINI_CARD_TEXTE', 'Approche-toi, ouvre le scan, capture avant les autres.');
+  if (gpsBtn) gpsBtn.textContent = copy('TUTO_MINI_GPS_BTN', 'Activer GPS');
+  if (closeBtn) closeBtn.textContent = copy('TUTO_MINI_CLOSE_BTN', 'Fermer');
+  if (note) note.textContent = copy('TUTO_MINI_NOTE', 'Aide optionnelle.');
+
   el.classList.add('open');
 }
 
@@ -270,8 +286,7 @@ function tutorialEnableCompass() {
 
 function maybeOpenQuickTutorial() {
   updateTutorialEntryPoints();
-  if (tutorialSeen) return;
-  setTimeout(() => openQuickTutorial(), 500);
+  // Keep tutorial available on demand only (button), no auto-open overlay.
 }
 
 async function loadTreasures() {
