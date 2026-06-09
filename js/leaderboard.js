@@ -1,7 +1,6 @@
 // ── Leaderboard global ───────────────────────────────
 let _lbShareData = null;
-
-const GLOBAL_FLASH_WEIGHT = 1;
+let _leaderboardSnapshot = null;
 
 function _lbIcon(name, className) {
   if (typeof uiIcon === 'function') return uiIcon(name, className);
@@ -25,28 +24,64 @@ async function _fetchLeaderboardData() {
   };
 }
 
+function _safeDurationSec(rawValue) {
+  const sec = Number(rawValue);
+  if (!Number.isFinite(sec)) return 0;
+  return Math.max(0, Math.round(sec));
+}
+
+function _fmtDurationSec(totalSec) {
+  const sec = Math.max(0, Math.round(Number(totalSec) || 0));
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
+  return `${m}m ${String(s).padStart(2, '0')}s`;
+}
+
 function _computeLeaderboardScores(events) {
   const totalFixed = 0;
 
   const players = {};
   events.forEach(e => {
     if (!e.pseudo) return;
-    if (!players[e.pseudo]) players[e.pseudo] = { flashEvents: [] };
-    if (e.treasure_type === 'unique') players[e.pseudo].flashEvents.push(e);
+    if (!players[e.pseudo]) {
+      players[e.pseudo] = {
+        flashCount: 0,
+        totalDurationSec: 0,
+        lastCaptureAtMs: Number.POSITIVE_INFINITY
+      };
+    }
+    if (e.treasure_type !== 'unique') return;
+    players[e.pseudo].flashCount += 1;
+    players[e.pseudo].totalDurationSec += _safeDurationSec(e.duration_sec);
+    const captureMs = Date.parse(e.created_at || '');
+    if (Number.isFinite(captureMs) && captureMs < players[e.pseudo].lastCaptureAtMs) {
+      players[e.pseudo].lastCaptureAtMs = captureMs;
+    }
   });
 
   const rows = Object.entries(players)
     .map(([pseudo, d]) => {
-      const flashCount = d.flashEvents.length;
+      const flashCount = d.flashCount;
       const allFixed = false;
-      const globalScore = flashCount * GLOBAL_FLASH_WEIGHT;
-      return { pseudo, flashCount, globalScore, allFixed };
+      const globalScore = flashCount;
+      const lastCaptureAtMs = Number.isFinite(d.lastCaptureAtMs) ? d.lastCaptureAtMs : Number.POSITIVE_INFINITY;
+      return {
+        pseudo,
+        flashCount,
+        totalDurationSec: d.totalDurationSec,
+        lastCaptureAtMs,
+        globalScore,
+        allFixed
+      };
     })
     .filter(r => r.flashCount > 0);
 
   rows.sort((a, b) => {
-    if (b.globalScore !== a.globalScore) return b.globalScore - a.globalScore;
     if (b.flashCount !== a.flashCount) return b.flashCount - a.flashCount;
+    if (a.totalDurationSec !== b.totalDurationSec) return a.totalDurationSec - b.totalDurationSec;
+    if (a.lastCaptureAtMs !== b.lastCaptureAtMs) return a.lastCaptureAtMs - b.lastCaptureAtMs;
     return a.pseudo.localeCompare(b.pseudo, 'fr', { sensitivity: 'base' });
   });
 
@@ -66,6 +101,7 @@ function _renderLeaderboard({ rows, totalFixed, myData, myRankNum }) {
     fixedCount: 0,
     totalFixed: totalFixed || 0,
     flashCount: myData ? myData.flashCount : 0,
+    totalDurationSec: myData ? myData.totalDurationSec : 0,
     fixedDuration: null,
     allFixed: myData ? !!myData.allFixed : false,
     globalScore: myData ? myData.globalScore : 0
@@ -80,8 +116,8 @@ function _renderLeaderboard({ rows, totalFixed, myData, myRankNum }) {
       <div class="my-card-pseudo">${escHtml(myPseudo)}</div>
       <div class="my-card-sub">Classement global</div>
       <div class="my-card-stats">
-        <strong>${_lbIcon('score', 'warn')}${myData.globalScore}</strong>
-        <span>${_lbIcon('flash', 'flash')}${myData.flashCount}</span>
+        <strong>${_lbIcon('flash', 'flash')}${myData.flashCount}</strong>
+        <span>${_lbIcon('clock', 'muted')}${_fmtDurationSec(myData.totalDurationSec)}</span>
       </div>
       <button class="btn-share" id="scoreShareBtn" style="margin-top:10px;padding:11px 12px;font-size:0.88rem" onclick="shareScoreResult()">📤 Partager mon score</button>
     </div>`;
@@ -111,8 +147,8 @@ function _renderLeaderboard({ rows, totalFixed, myData, myRankNum }) {
         <div class="lb-body">
           <div class="lb-name">${escHtml(p.pseudo)}</div>
           <div class="lb-score">
-            <strong>${_lbIcon('score', 'warn')}${p.globalScore}</strong>
-            <span>${_lbIcon('flash', 'flash')}${p.flashCount}</span>
+            <strong>${_lbIcon('flash', 'flash')}${p.flashCount}</strong>
+            <span>${_lbIcon('clock', 'muted')}${_fmtDurationSec(p.totalDurationSec)}</span>
           </div>
         </div>
       </div>`;
@@ -123,6 +159,19 @@ function _renderLeaderboard({ rows, totalFixed, myData, myRankNum }) {
   if (lbList.innerHTML !== html) lbList.innerHTML = html;
   lbList.dataset.loaded = '1';
   document.getElementById('lbRefresh').textContent = '↻ ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function _toLeaderboardSnapshot(computed) {
+  const byPseudo = Object.fromEntries(computed.rows.map((row, idx) => [row.pseudo, { ...row, rank: idx + 1 }]));
+  return { ...computed, byPseudo };
+}
+
+async function getLeaderboardSnapshot(forceRefresh = false) {
+  if (!forceRefresh && _leaderboardSnapshot) return _leaderboardSnapshot;
+  const data = await _fetchLeaderboardData();
+  const computed = _computeLeaderboardScores(data.events);
+  _leaderboardSnapshot = _toLeaderboardSnapshot(computed);
+  return _leaderboardSnapshot;
 }
 
 async function loadLeaderboard() {
@@ -145,8 +194,13 @@ async function loadLeaderboard() {
   }
   if (!el.dataset.loaded) el.innerHTML = `<p style="color:var(--ink-3);text-align:center;padding:30px">⏳ Chargement…</p>`;
   try {
-    const data = await _fetchLeaderboardData();
-    const computed = _computeLeaderboardScores(data.events);
+    const snapshot = await getLeaderboardSnapshot(true);
+    const computed = {
+      rows: snapshot.rows,
+      totalFixed: snapshot.totalFixed,
+      myData: snapshot.myData,
+      myRankNum: snapshot.myRankNum
+    };
     _renderLeaderboard(computed);
   } catch (err) {
     el.innerHTML = `<p style="color:#f87171;text-align:center;padding:40px">⚠️ ${escHtml(err.message)}</p>`;

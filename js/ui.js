@@ -522,10 +522,14 @@ async function loadMoi() {
   // Fetch rank from leaderboard
   let rank = '—';
   if (myPseudo) {
-    const { data } = await db.from('players').select('pseudo,score').order('score', { ascending: true });
-    if (data) {
-      const idx = data.findIndex(p => p.pseudo === myPseudo);
-      if (idx >= 0) rank = '#' + (idx + 1);
+    try {
+      if (typeof getLeaderboardSnapshot === 'function') {
+        const snapshot = await getLeaderboardSnapshot(false);
+        const myRow = snapshot && snapshot.byPseudo ? snapshot.byPseudo[myPseudo] : null;
+        if (myRow && Number.isFinite(myRow.rank)) rank = '#' + myRow.rank;
+      }
+    } catch {
+      rank = '—';
     }
   }
 
