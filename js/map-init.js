@@ -138,6 +138,7 @@ function renderMarkers() {
   mapMarkers = {};
 
   treasures.forEach(t => {
+    if (t.solo_hidden) return;
     const isMine  = t.found_by && t.found_by.split(',').includes(myPseudo);
     // Player map rule: flash markers are visible only in Flash mode.
     if (t.type === 'unique' && activeGameMode !== 'unique') return;

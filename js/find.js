@@ -86,6 +86,33 @@ async function _tryProcessFindSecure(t) {
   return true;
 }
 
+async function _tryGuestSoloHiddenCapture(t) {
+  if (!t || !t.solo_hidden) return false;
+  const foundList = (t.found_by || '').split(',').filter(Boolean);
+  if (foundList.length > 0) {
+    showFoundResult('taken', t);
+    return true;
+  }
+
+  const payload = {
+    found_by: 'AUTRE',
+    found_at: new Date().toISOString()
+  };
+  const { error } = await db.from('treasures').update(payload).eq('id', t.id).eq('found_by', '');
+  if (error) {
+    _checkinError('Validation serveur indisponible pour le moment. Réessaie dans quelques secondes.');
+    return true;
+  }
+
+  await loadTreasures();
+  renderMarkers();
+  updateRadar();
+  if (typeof updateCollectionProgress === 'function') updateCollectionProgress();
+  updateProgressBar();
+  showFoundResult('taken', { ...t, found_by: 'AUTRE' });
+  return true;
+}
+
 async function processFindById(treasureId) {
   if (_processingFind) return;
   if (_inFlightCaptures.has(treasureId)) return;
@@ -114,6 +141,7 @@ async function _doProcessFind(treasureId) {
   }
 
   if (!myPseudo) {
+    if (await _tryGuestSoloHiddenCapture(t)) return;
     _checkinError('Mode invité : connecte-toi pour révéler des polaroids.');
     return;
   }

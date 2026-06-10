@@ -293,15 +293,15 @@ async function loadTreasures() {
   let data = null;
   let error = null;
   ({ data, error } = await db.from('treasures')
-    .select('id,type,lat,lng,label,hint,visible,photo_url,found_by,placed_at,activated_at,quest')
+    .select('id,type,lat,lng,label,hint,visible,photo_url,found_by,placed_at,activated_at,quest,solo_hidden')
     .eq('visible', true));
-  if (error && /activated_at/i.test(error.message || '')) {
+  if (error && /(activated_at|solo_hidden)/i.test(error.message || '')) {
     // Backward-compatible fallback for environments where the migration was not applied yet.
     const retry = await db.from('treasures')
       .select('id,type,lat,lng,label,hint,visible,photo_url,found_by,placed_at,quest')
       .eq('visible', true);
     error = retry.error;
-    data = (retry.data || []).map(t => ({ ...t, activated_at: null }));
+    data = (retry.data || []).map(t => ({ ...t, activated_at: null, solo_hidden: false }));
   }
   if (error) {
     console.error('loadTreasures error:', error.message);
@@ -311,7 +311,7 @@ async function loadTreasures() {
   }
   if (!data) return;
   // Flash-only fork: keep only unique treasures.
-  treasures = data.filter(t => t.type === 'unique');
+  treasures = data.filter(t => t.type === 'unique' && !t.solo_hidden);
   // Detect flash treasures taken by someone else while we were nearby
   if (_prevAvailableFlash.size > 0 && playerLat !== null && activeGameMode === 'unique') {
     const newlyTaken = treasures.filter(t =>
