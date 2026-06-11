@@ -32,13 +32,15 @@
     <div class="ps-title">Mode Flash</div>
     <p class="ps-sub">Entre ton pseudo, active le GPS, et pars en chasse.</p>
     <div class="ps-badge">GPS requis - jeu en ville</div>
-    <input type="text" id="pseudoInput" placeholder="Ton pseudo" maxlength="20" autocomplete="username" autocapitalize="characters">
-    <input type="password" id="passwordInput" placeholder="MOT DE PASSE" maxlength="64" autocomplete="current-password" class="field-spaced">
-    <div id="gameCodeWrap" class="field-hidden">
-      <input type="text" id="gameCodeInput" placeholder="CODE D'ACCÈS" maxlength="20" autocomplete="off" autocapitalize="characters" class="field-accent">
-    </div>
-    <p id="pseudoErr"></p>
-    <button class="btn-primary" id="startBtn" onclick="startGame()">Entrer dans le jeu</button>
+    <form id="loginForm" onsubmit="event.preventDefault(); startGame();">
+      <input type="text" id="pseudoInput" placeholder="Ton pseudo" maxlength="20" autocomplete="username" autocapitalize="characters">
+      <input type="password" id="passwordInput" placeholder="MOT DE PASSE" maxlength="64" autocomplete="current-password" class="field-spaced">
+      <div id="gameCodeWrap" class="field-hidden">
+        <input type="text" id="gameCodeInput" placeholder="CODE D'ACCÈS" maxlength="20" autocomplete="off" autocapitalize="characters" class="field-accent">
+      </div>
+      <p id="pseudoErr"></p>
+      <button class="btn-primary" id="startBtn" type="submit">Entrer dans le jeu</button>
+    </form>
   </div>
 </div>
 
@@ -95,7 +97,7 @@
     <div id="compassDebug"></div>
     <div id="radarBar"></div>
     <div id="flashHint">
-      <img id="flashHintPhoto" src="" alt="">
+      <img id="flashHintPhoto" alt="">
       <div>
         <div id="flashHintLabel">Voilà ce que tu cherches</div>
         <div id="flashHintSub">Encore quelques mètres…</div>
@@ -112,7 +114,7 @@
 
 <!-- ── Photo viewer overlay ──────────────────────────── -->
 <div id="photoViewer" onclick="closePhotoViewer()">
-  <img id="photoViewerImg" src="" alt="Photo agrandie de la trouvaille">
+  <img id="photoViewerImg" alt="Photo agrandie de la trouvaille">
   <button onclick="closePhotoViewer()" aria-label="Fermer la photo">✕ Fermer</button>
 </div>
 
@@ -199,7 +201,7 @@
   <div id="quickTutorialCard">
     <h3 id="qtTitle">Mode Flash</h3>
     <p id="qtIntro">Repere une miniature proche puis scanne son QR.</p>
-    <img id="qtExamplePhoto" src="" alt="Exemple de balise physique">
+    <img id="qtExamplePhoto" alt="Exemple de balise physique">
     <div class="qt-grid">
       <div class="qt-card">
         <strong id="qtCardTitle">Rappel rapide</strong>
