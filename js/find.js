@@ -130,7 +130,7 @@ async function _trySoloHiddenCaptureNoGps(t) {
     return true;
   }
 
-  const winner = myPseudo || 'AUTRE';
+  const winner = 'AUTRE';
   const payload = {
     found_by: winner,
     found_at: new Date().toISOString()
@@ -156,8 +156,7 @@ async function _trySoloHiddenCaptureNoGps(t) {
   if (typeof updateCollectionProgress === 'function') updateCollectionProgress();
   updateProgressBar();
 
-  if (myPseudo) showFoundResult('success', { ...t, found_by: winner }, 0);
-  else showFoundResult('taken', { ...t, found_by: winner });
+  showFoundResult('taken', { ...t, found_by: winner });
   return true;
 }
 
