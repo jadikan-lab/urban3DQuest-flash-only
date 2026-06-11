@@ -460,8 +460,8 @@ async function _qrHandleResult(raw) {
     // Nimiq continue de scanner — pas besoin de redémarrer
     _resetQRInput(); // permettre de retenter via photo
   } else {
-    status.textContent = _qrCopy('QR_STATUS_CAPTURED', '✅ Polaroid révélé !');
-    status.className = 'qr-ok';
+    status.textContent = _qrCopy('QR_STATUS_ANALYZING', '🔍 Révélation en cours…');
+    status.className = '';
     haptic([80, 40, 160]);
     await new Promise(r => setTimeout(r, 400));
     closeQRScanner();

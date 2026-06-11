@@ -98,9 +98,18 @@ async function _tryGuestSoloHiddenCapture(t) {
     found_by: 'AUTRE',
     found_at: new Date().toISOString()
   };
-  const { error } = await db.from('treasures').update(payload).eq('id', t.id).eq('found_by', '');
+  const { data: updatedRows, error } = await db.from('treasures')
+    .update(payload)
+    .eq('id', t.id)
+    .eq('found_by', '')
+    .select('id');
   if (error) {
     _checkinError('Validation serveur indisponible pour le moment. Réessaie dans quelques secondes.');
+    return true;
+  }
+  if (!updatedRows || !updatedRows.length) {
+    // Another player may have captured first, or write access is denied.
+    showFoundResult('taken', t);
     return true;
   }
 
@@ -110,6 +119,45 @@ async function _tryGuestSoloHiddenCapture(t) {
   if (typeof updateCollectionProgress === 'function') updateCollectionProgress();
   updateProgressBar();
   showFoundResult('taken', { ...t, found_by: 'AUTRE' });
+  return true;
+}
+
+async function _trySoloHiddenCaptureNoGps(t) {
+  if (!t || !t.solo_hidden) return false;
+  const foundList = (t.found_by || '').split(',').filter(Boolean);
+  if (foundList.length > 0) {
+    showFoundResult('taken', t);
+    return true;
+  }
+
+  const winner = myPseudo || 'AUTRE';
+  const payload = {
+    found_by: winner,
+    found_at: new Date().toISOString()
+  };
+  const { data: updatedRows, error } = await db.from('treasures')
+    .update(payload)
+    .eq('id', t.id)
+    .eq('found_by', '')
+    .select('id');
+  if (error) {
+    _checkinError('Validation serveur indisponible pour le moment. Réessaie dans quelques secondes.');
+    return true;
+  }
+  if (!updatedRows || !updatedRows.length) {
+    showFoundResult('taken', t);
+    return true;
+  }
+
+  await loadTreasures();
+  renderMarkers();
+  updateHeader();
+  updateRadar();
+  if (typeof updateCollectionProgress === 'function') updateCollectionProgress();
+  updateProgressBar();
+
+  if (myPseudo) showFoundResult('success', { ...t, found_by: winner }, 0);
+  else showFoundResult('taken', { ...t, found_by: winner });
   return true;
 }
 
@@ -139,6 +187,9 @@ async function _doProcessFind(treasureId) {
     _checkinError('Seuls les tresors flash/uniques sont actifs dans cette version.');
     return;
   }
+
+  // Solo hidden QR are validated without GPS (first scan wins).
+  if (await _trySoloHiddenCaptureNoGps(t)) return;
 
   if (!myPseudo) {
     if (await _tryGuestSoloHiddenCapture(t)) return;
