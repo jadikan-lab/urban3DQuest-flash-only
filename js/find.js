@@ -101,7 +101,7 @@ async function _tryGuestSoloHiddenCapture(t) {
   const { data: updatedRows, error } = await db.from('treasures')
     .update(payload)
     .eq('id', t.id)
-    .eq('found_by', '')
+    .or('found_by.is.null,found_by.eq.')
     .select('id');
   if (error) {
     _checkinError('Validation serveur indisponible pour le moment. Réessaie dans quelques secondes.');
@@ -138,7 +138,7 @@ async function _trySoloHiddenCaptureNoGps(t) {
   const { data: updatedRows, error } = await db.from('treasures')
     .update(payload)
     .eq('id', t.id)
-    .eq('found_by', '')
+    .or('found_by.is.null,found_by.eq.')
     .select('id');
   if (error) {
     _checkinError('Validation serveur indisponible pour le moment. Réessaie dans quelques secondes.');
