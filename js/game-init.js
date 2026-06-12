@@ -105,7 +105,7 @@ async function initGame(pendingFoundId) {
   maybeOpenQuickTutorial();
   // Welcome back toast for returning players
   if (myPseudo && myFoundCount > 0 && !sessionStorage.getItem('u3dq_welcome_seen')) {
-    const remaining = treasures.filter(t => t.type === 'unique' && !(t.found_by && t.found_by.length > 0)).length;
+    const remaining = treasures.filter(t => t.type === 'unique' && !t.solo_hidden && !(t.found_by && t.found_by.length > 0)).length;
     if (remaining > 0) {
       const wt = document.getElementById('welcomeToast');
       if (wt) {
