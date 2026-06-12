@@ -288,7 +288,9 @@ function maybeOpenQuickTutorial() {
 async function loadTreasures() {
   // Snapshot available flash treasures before refresh (for "just taken nearby" detection)
   const _prevAvailableFlash = new Set(
-    treasures.filter(t => t.type === 'unique' && !(t.found_by && t.found_by.length > 0)).map(t => t.id)
+    treasures
+      .filter(t => t.type === 'unique' && !t.solo_hidden && !(t.found_by && t.found_by.length > 0))
+      .map(t => t.id)
   );
   let data = null;
   let error = null;
@@ -310,12 +312,14 @@ async function loadTreasures() {
     return;
   }
   if (!data) return;
-  // Flash-only fork: keep only unique treasures.
-  treasures = data.filter(t => t.type === 'unique' && !t.solo_hidden);
+  // Flash-only fork: keep unique + fixed for QR validation and collection;
+  // map rendering decides what is visible to players.
+  treasures = data.filter(t => t.type === 'unique' || t.type === 'fixed');
   // Detect flash treasures taken by someone else while we were nearby
   if (_prevAvailableFlash.size > 0 && playerLat !== null && activeGameMode === 'unique') {
     const newlyTaken = treasures.filter(t =>
       t.type === 'unique' &&
+      !t.solo_hidden &&
       _prevAvailableFlash.has(t.id) &&
       t.found_by && t.found_by.length > 0 &&
       !(myPseudo && t.found_by.split(',').includes(myPseudo)) &&

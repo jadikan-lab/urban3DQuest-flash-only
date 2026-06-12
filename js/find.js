@@ -24,6 +24,93 @@ function _isTreasureAllowedInActiveScope(treasure) {
   return !!treasure;
 }
 
+async function _rollbackFoundBy(treasure, previousFoundBy, expectedFoundBy) {
+  const rollbackPayload = {
+    found_by: previousFoundBy,
+    found_at: treasure.found_at || null
+  };
+  const { error } = await db.from('treasures')
+    .update(rollbackPayload)
+    .eq('id', treasure.id)
+    .eq('found_by', expectedFoundBy)
+    .select('id');
+  return !error;
+}
+
+async function _tryProcessFindNoGps(t, foundList) {
+  if (!t || !myPseudo) return false;
+
+  if (t.type === 'unique' && !t.solo_hidden) return false;
+  if (t.type === 'unique' && foundList.length > 0) {
+    showFoundResult('taken', t);
+    return true;
+  }
+
+  const newFoundBy = t.type === 'unique'
+    ? myPseudo
+    : [...foundList, myPseudo].join(',');
+  const payload = {
+    found_by: newFoundBy,
+    found_at: new Date().toISOString()
+  };
+
+  const updateBase = db.from('treasures').update(payload).eq('id', t.id);
+  let updateResult = null;
+  if (t.type === 'unique') {
+    updateResult = await updateBase.or('found_by.is.null,found_by.eq.').select('id');
+  } else {
+    updateResult = await updateBase.select('id');
+  }
+  const { data: updatedRows, error: updateError } = updateResult;
+  if (updateError || !updatedRows || !updatedRows.length) {
+    if (t.type === 'unique') {
+      showFoundResult('taken', t);
+    } else {
+      _checkinError('Validation impossible pour le moment. Réessaie dans quelques secondes.');
+    }
+    return true;
+  }
+
+  const durationSec = t.type === 'unique' ? _getUniqueDurationFromLastActivationSec(t) : 0;
+  const eventPayload = {
+    pseudo: myPseudo,
+    treasure_id: t.id,
+    treasure_type: t.type,
+    duration_sec: durationSec
+  };
+  const { error: eventError } = await db.from('events').insert(eventPayload);
+  if (eventError) {
+    if (eventError.code === '23505') {
+      showFoundResult('already', t);
+      return true;
+    }
+    const rolledBack = await _rollbackFoundBy(t, t.found_by || '', newFoundBy);
+    if (!rolledBack) {
+      _checkinError('Validation partielle détectée. Réessaie dans quelques secondes.');
+      return true;
+    }
+    _checkinError('Validation impossible pour le moment. Réessaie dans quelques secondes.');
+    return true;
+  }
+
+  const { data: pFresh } = await db.from('players').select('score,found_count').eq('pseudo', myPseudo).single();
+  if (pFresh) {
+    myScore = pFresh.score || 0;
+    myFoundCount = pFresh.found_count || 0;
+  }
+
+  await loadTreasures();
+  renderMarkers();
+  updateHeader();
+  updateRadar();
+  if (typeof updateCollectionProgress === 'function') updateCollectionProgress();
+  updateProgressBar();
+
+  haptic([80, 40, 160]);
+  showFoundResult('success', t, durationSec, null);
+  return true;
+}
+
 async function _tryProcessFindSecure(t) {
   const hasGps = Number.isFinite(playerLat) && Number.isFinite(playerLng);
   const payload = {
@@ -124,6 +211,7 @@ async function _tryGuestSoloHiddenCapture(t) {
 
 async function _trySoloHiddenCaptureNoGps(t) {
   if (!t || !t.solo_hidden) return false;
+  if (myPseudo) return false;
   const foundList = (t.found_by || '').split(',').filter(Boolean);
   if (foundList.length > 0) {
     showFoundResult('taken', t);
@@ -182,15 +270,14 @@ async function _doProcessFind(treasureId) {
     _checkinError('Ce tresor n\'est pas actif dans cette partie.');
     return;
   }
-  if (t.type !== 'unique') {
-    _checkinError('Seuls les tresors flash/uniques sont actifs dans cette version.');
+  if (t.type !== 'unique' && t.type !== 'fixed') {
+    _checkinError('Ce type de tresor n\'est pas pris en charge dans cette version.');
     return;
   }
 
-  // Solo hidden QR are validated without GPS (first scan wins).
-  if (await _trySoloHiddenCaptureNoGps(t)) return;
-
   if (!myPseudo) {
+    // Solo hidden QR are validated without GPS for guests (first scan wins).
+    if (await _trySoloHiddenCaptureNoGps(t)) return;
     if (await _tryGuestSoloHiddenCapture(t)) return;
     _checkinError('Mode invité : connecte-toi pour révéler des polaroids.');
     return;
@@ -202,6 +289,9 @@ async function _doProcessFind(treasureId) {
 
   // Unique: check if taken
   if (t.type === 'unique' && foundList.length > 0) { showFoundResult('taken', t); return; }
+
+  // Fixed treasures and hidden solo uniques are validated without GPS.
+  if (await _tryProcessFindNoGps(t, foundList)) return;
 
   // Secure server path only (fail closed if unavailable).
   if (await _tryProcessFindSecure(t)) return;
@@ -259,26 +349,34 @@ function showFoundResult(status, t, durationSec) {
   } else { photoStrip.style.display = 'none'; }
 
   if (status === 'success') {
-    setFoundIcon('flash', 'flash');
-    label.textContent = _findCopy('FLASH_WIN_LABEL', 'CAPTURE');
-    title.textContent = _findCopy('FLASH_WIN_TITRE', 'Tresor unique capture');
-    dur.textContent   = formatDuration(durationSec);
-    desc.textContent  = _findCopy('FLASH_WIN_DESC', 'Tresor valide. Partage ta capture et continue la chasse.');
-    _lastUniqueSuccessModal = { id: t.id, at: Date.now() };
-    window._uniqueCaptureShareData = {
-      id: t.id,
-      label: tLabel(t),
-      durationSec: durationSec || 0,
-      durationText: durationSec != null ? formatDuration(durationSec) : '',
-      shareUrl: location.origin + location.pathname,
-      pseudo: myPseudo || '',
-      photoUrl: t.photo_url || ''
-    };
-    if (sharePanel) sharePanel.classList.remove('field-hidden');
+    if (t.type === 'fixed') {
+      setFoundIcon('camera', 'teal');
+      label.textContent = 'COLLECTION';
+      title.textContent = 'Balise fixe ajoutée';
+      dur.textContent = '';
+      desc.textContent = 'Balise validée sans GPS. Continue la collecte.';
+    } else {
+      setFoundIcon('flash', 'flash');
+      label.textContent = _findCopy('FLASH_WIN_LABEL', 'CAPTURE');
+      title.textContent = _findCopy('FLASH_WIN_TITRE', 'Tresor unique capture');
+      dur.textContent   = formatDuration(durationSec);
+      desc.textContent  = _findCopy('FLASH_WIN_DESC', 'Tresor valide. Partage ta capture et continue la chasse.');
+      _lastUniqueSuccessModal = { id: t.id, at: Date.now() };
+      window._uniqueCaptureShareData = {
+        id: t.id,
+        label: tLabel(t),
+        durationSec: durationSec || 0,
+        durationText: durationSec != null ? formatDuration(durationSec) : '',
+        shareUrl: location.origin + location.pathname,
+        pseudo: myPseudo || '',
+        photoUrl: t.photo_url || ''
+      };
+      if (sharePanel) sharePanel.classList.remove('field-hidden');
+    }
   } else if (status === 'already') {
     setFoundIcon('refresh', 'warn');
-    label.textContent = _findCopy('FLASH_ALREADY_LABEL', 'DÉJÀ FLASHÉ');
-    title.textContent = _findCopy('FLASH_ALREADY_TITRE', 'Tu as déjà flashé ce polaroid.');
+    label.textContent = t.type === 'fixed' ? 'DÉJÀ AJOUTÉE' : _findCopy('FLASH_ALREADY_LABEL', 'DÉJÀ FLASHÉ');
+    title.textContent = t.type === 'fixed' ? 'Tu as déjà validé cette balise fixe.' : _findCopy('FLASH_ALREADY_TITRE', 'Tu as déjà flashé ce polaroid.');
     dur.textContent   = '';
     desc.textContent  = '';
   } else {

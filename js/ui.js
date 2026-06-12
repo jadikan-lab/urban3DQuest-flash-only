@@ -19,6 +19,30 @@ window.addEventListener('beforeunload', () => {
 
 const _uiCopy = (key, fallback = '') => (window.u3dqCopyText ? window.u3dqCopyText(key, fallback) : fallback);
 
+function _isFoundByPseudo(treasure, pseudo) {
+  if (!treasure || !pseudo) return false;
+  const foundBy = String(treasure.found_by || '').trim();
+  if (!foundBy) return false;
+  return foundBy.split(',').filter(Boolean).includes(pseudo);
+}
+
+function updateScoreFixedCaptureCta() {
+  const btn = document.getElementById('scoreFixedCaptureBtn');
+  if (!btn) return;
+  const visible = activeTab === 'scores';
+  const enabled = !!myPseudo;
+  btn.style.display = visible ? 'inline-flex' : 'none';
+  btn.disabled = !enabled;
+  btn.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+  if (enabled) {
+    btn.title = 'Valider une balise fixe sans GPS';
+    btn.textContent = 'J\'ai trouve une balise fixe';
+  } else {
+    btn.title = 'Connecte-toi pour valider une balise fixe';
+    btn.textContent = 'Connecte-toi pour valider';
+  }
+}
+
 // ── Tabs ─────────────────────────────────────────────
 function showTab(name, btn) {
   activeTab = name;
@@ -54,6 +78,7 @@ function showTab(name, btn) {
     _updateRadarBg();
     applyMapHeadingRotation();
     updateCompassCorner();
+    updateScoreFixedCaptureCta();
   } else if (name === 'moi') {
     stopCompassInterval();
     _clearArrows();
@@ -70,14 +95,22 @@ function showTab(name, btn) {
     _updateRadarBg();
     updateCompassCorner();
   }
+  updateScoreFixedCaptureCta();
 }
 
 function _getFlashCollectionStats() {
-  const allUnique = Array.isArray(treasures) ? treasures.filter(t => t && t.type === 'unique') : [];
-  const total = allUnique.length;
+  const allCollectibles = Array.isArray(treasures)
+    ? treasures.filter(t => t && (t.type === 'unique' || t.type === 'fixed'))
+    : [];
+  const visible = allCollectibles.filter(t => !t.solo_hidden);
+  const hiddenUnlocked = myPseudo
+    ? allCollectibles.filter(t => t.solo_hidden && _isFoundByPseudo(t, myPseudo))
+    : [];
+  const total = visible.length + hiddenUnlocked.length;
+  const tracked = [...visible, ...hiddenUnlocked];
   const found = myPseudo
-    ? allUnique.filter(t => t.found_by && t.found_by.split(',').includes(myPseudo)).length
-    : allUnique.filter(t => t.found_by && t.found_by.length > 0).length;
+    ? tracked.filter(t => _isFoundByPseudo(t, myPseudo)).length
+    : tracked.filter(t => t.found_by && t.found_by.length > 0).length;
   const remaining = Math.max(0, total - found);
   return { total, found, remaining };
 }
@@ -319,6 +352,20 @@ async function shareUniqueCapture() {
   });
 }
 
+function openFixedCaptureScanner() {
+  if (!myPseudo) {
+    const ps = document.getElementById('pseudoScreen');
+    if (ps) ps.style.display = 'flex';
+    const inp = document.getElementById('pseudoInput');
+    if (inp) {
+      inp.value = '';
+      inp.focus();
+    }
+    return;
+  }
+  openQRScanner();
+}
+
 async function inviteFriendsFromCapture() {
   const data = window._uniqueCaptureShareData;
   if (!data) return;
@@ -377,8 +424,8 @@ async function loadCarnet() {
     el.innerHTML = evts.map(ev => {
       const t = tMap[ev.treasure_id];
       const label = t ? escHtml(tLabel(t)) : escHtml(ev.treasure_id);
-      const typeLabel = 'Flash';
-      const typeClass = 'cn-unique';
+      const typeLabel = ev.treasure_type === 'fixed' ? 'Fixe' : 'Flash';
+      const typeClass = ev.treasure_type === 'fixed' ? 'cn-fixed' : 'cn-unique';
       const date = new Date(ev.created_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
       const durStr = ev.duration_sec ? `⏱ ${formatDuration(ev.duration_sec)}` : '';
       // Photo
@@ -564,8 +611,10 @@ async function loadMoi() {
   const el = document.getElementById('moiContent');
   const actionsEl = document.getElementById('moiActions');
   if (!el) return;
-  const unique = treasures.filter(t => t.type === 'unique');
-  const myUnique = unique.filter(t => t.found_by && t.found_by.split(',').includes(myPseudo)).length;
+  const unique = treasures.filter(t => t.type === 'unique' && !t.solo_hidden);
+  const fixed = treasures.filter(t => t.type === 'fixed');
+  const myUnique = unique.filter(t => _isFoundByPseudo(t, myPseudo)).length;
+  const myFixed = fixed.filter(t => _isFoundByPseudo(t, myPseudo)).length;
   const stats = _getFlashCollectionStats();
 
   // Fetch rank from leaderboard
@@ -594,7 +643,8 @@ async function loadMoi() {
       .replace('{R}', String(stats.remaining)))}</div>
     <div class="moi-grid">
       <div class="moi-tile"><div class="moi-tile-val">${myUnique}</div><div class="moi-tile-lbl">Flash</div></div>
-      <div class="moi-tile"><div class="moi-tile-val">${unique.length}</div><div class="moi-tile-lbl">Disponibles</div></div>
+      <div class="moi-tile"><div class="moi-tile-val">${myFixed}</div><div class="moi-tile-lbl">Fixes</div></div>
+      <div class="moi-tile"><div class="moi-tile-val">${stats.total}</div><div class="moi-tile-lbl">Collection</div></div>
       <div class="moi-tile"><div class="moi-tile-val">${rank}</div><div class="moi-tile-lbl">Classement</div></div>
     </div>
   `;
@@ -616,6 +666,7 @@ async function loadMoi() {
 
   const reportBtn = document.getElementById('reportMissingBtn');
   if (reportBtn) reportBtn.textContent = _uiCopy('COMPTE_REPORT_CTA', 'Signaler une miniature introuvable');
+  updateScoreFixedCaptureCta();
 
   const hapticToggle = document.getElementById('hapticToggleInput');
   if (hapticToggle) {

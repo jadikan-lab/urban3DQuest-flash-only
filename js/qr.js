@@ -211,7 +211,14 @@ function openQRScanner(beaconId) {
         photoEl.src = '';
         photoEl.style.display = 'none';
       }
-      targetEl.style.display = 'none';
+      if (lblSpan) lblSpan.textContent = 'Validation manuelle';
+      if (nameSpan) nameSpan.textContent = 'Balise fixe (ou solo)';
+      if (questSpan) {
+        questSpan.textContent = 'Photo du QR';
+        questSpan.style.display = 'block';
+      }
+      status.textContent = _qrCopy('QR_STATUS_GENERIC_MANUAL', 'Prends la photo du QR d\'une balise fixe pour l\'ajouter à ta collection.');
+      targetEl.style.display = 'block';
     }
   }
   document.getElementById('qrOverlay').classList.add('open');
