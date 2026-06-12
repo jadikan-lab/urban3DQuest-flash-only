@@ -38,10 +38,10 @@ function updateScoreFixedCaptureCta() {
     btn.setAttribute('aria-disabled', enabled ? 'false' : 'true');
     if (enabled) {
       btn.title = 'Valider une balise fixe sans GPS';
-      btn.textContent = 'J\'ai trouve une balise fixe';
+      btn.textContent = 'Balise fixe trouvee';
     } else {
       btn.title = 'Connecte-toi pour valider une balise fixe';
-      btn.textContent = 'Connecte-toi pour valider';
+      btn.textContent = 'Connecte-toi';
     }
   }
   if (calcBtn) {
@@ -121,7 +121,7 @@ function openPointsCalcModal() {
   if (!box) return;
   const copy = document.getElementById('pointsCalcCopy');
   if (copy) {
-    copy.textContent = 'Classement global: Flash = 100 pts, Solo = 100 pts, Fixe = 35 pts. Le reset se fait par nouvelle saison depuis l\'admin.';
+    copy.textContent = 'Classement global: Flash = 50 pts, Solo = 50 pts, Fixe = 35 pts.';
   }
   box.classList.add('open');
 }

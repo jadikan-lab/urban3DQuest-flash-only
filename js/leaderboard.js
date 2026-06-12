@@ -1,8 +1,8 @@
 // ── Leaderboard global ───────────────────────────────
 let _lbShareData = null;
 let _leaderboardSnapshot = null;
-const SCORE_POINTS_FLASH = 100;
-const SCORE_POINTS_SOLO = 100;
+const SCORE_POINTS_FLASH = 50;
+const SCORE_POINTS_SOLO = 50;
 const SCORE_POINTS_FIXED = 35;
 
 function _isSoloTreasureId(treasureId) {
