@@ -122,6 +122,7 @@
 <div id="panelScores" class="panel">
   <div class="score-fixed-cta-wrap">
     <button id="scoreFixedCaptureBtn" class="score-fixed-cta" onclick="openFixedCaptureScanner()" aria-label="Ajouter une balise fixe a ma collection" title="Valider une balise fixe sans GPS">J'ai trouve une balise fixe</button>
+    <button id="scorePointsCalcBtn" class="score-fixed-cta" onclick="openPointsCalcModal()" aria-label="Voir le calcul des points" title="Voir le calcul des points">Calcul des points</button>
   </div>
   <div id="myCard"></div>
   <hr class="lp-line separator-tight">
@@ -280,6 +281,17 @@
     <p class="missing-report-copy" id="missingReportCopy">Si vous pensez qu'une miniature a disparue du jeu, envoyez un mail avec les infos a Guilhem@jadikan-lp.com</p>
     <div class="missing-report-actions">
       <button class="btn-primary" id="missingReportCloseBtn" onclick="closeMissingFlashReport()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div id="pointsCalcModal">
+  <div class="missing-report-backdrop" onclick="closePointsCalcModal()"></div>
+  <div class="missing-report-card">
+    <div class="missing-report-title" id="pointsCalcTitle">Calcul des points</div>
+    <p class="missing-report-copy" id="pointsCalcCopy">Classement global: Flash = 100 pts, Solo = 100 pts, Fixe = 35 pts. Le reset se fait par nouvelle saison depuis l'admin.</p>
+    <div class="missing-report-actions">
+      <button class="btn-primary" id="pointsCalcCloseBtn" onclick="closePointsCalcModal()">Fermer</button>
     </div>
   </div>
 </div>

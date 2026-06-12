@@ -1,6 +1,13 @@
 // ── Leaderboard global ───────────────────────────────
 let _lbShareData = null;
 let _leaderboardSnapshot = null;
+const SCORE_POINTS_FLASH = 100;
+const SCORE_POINTS_SOLO = 100;
+const SCORE_POINTS_FIXED = 35;
+
+function _isSoloTreasureId(treasureId) {
+  return /^solo[-_ ]?\d+/i.test(String(treasureId || ''));
+}
 
 function _lbIcon(name, className) {
   if (typeof uiIcon === 'function') return uiIcon(name, className);
@@ -24,6 +31,29 @@ async function _fetchLeaderboardData() {
   };
 }
 
+function _getSeasonBounds(cfg) {
+  const startRaw = String(cfg?.seasonStartAt || cfg?.season_start_at || '').trim();
+  const endRaw = String(cfg?.seasonEndAt || cfg?.season_end_at || '').trim();
+  const startMs = startRaw ? Date.parse(startRaw) : null;
+  const endMs = endRaw ? Date.parse(endRaw) : null;
+  return {
+    startMs: Number.isFinite(startMs) ? startMs : null,
+    endMs: Number.isFinite(endMs) ? endMs : null
+  };
+}
+
+function _filterEventsForSeason(events, cfg) {
+  const { startMs, endMs } = _getSeasonBounds(cfg);
+  if (!startMs && !endMs) return events;
+  return events.filter(e => {
+    const t = Date.parse(e.created_at || '');
+    if (!Number.isFinite(t)) return false;
+    if (startMs && t < startMs) return false;
+    if (endMs && t > endMs) return false;
+    return true;
+  });
+}
+
 function _safeDurationSec(rawValue) {
   const sec = Number(rawValue);
   if (!Number.isFinite(sec)) return 0;
@@ -39,22 +69,40 @@ function _fmtDurationSec(totalSec) {
   return `${m}m ${String(s).padStart(2, '0')}s`;
 }
 
-function _computeLeaderboardScores(events) {
+function _computeLeaderboardScores(events, cfg) {
   const totalFixed = 0;
+  const scopedEvents = _filterEventsForSeason(events, cfg);
 
   const players = {};
-  events.forEach(e => {
+  scopedEvents.forEach(e => {
     if (!e.pseudo) return;
     if (!players[e.pseudo]) {
       players[e.pseudo] = {
+        globalScore: 0,
         flashCount: 0,
+        soloCount: 0,
+        fixedCount: 0,
         totalDurationSec: 0,
         lastCaptureAtMs: Number.POSITIVE_INFINITY
       };
     }
-    if (e.treasure_type !== 'unique') return;
-    players[e.pseudo].flashCount += 1;
-    players[e.pseudo].totalDurationSec += _safeDurationSec(e.duration_sec);
+
+    if (e.treasure_type === 'fixed') {
+      players[e.pseudo].fixedCount += 1;
+      players[e.pseudo].globalScore += SCORE_POINTS_FIXED;
+    } else if (e.treasure_type === 'unique') {
+      if (_isSoloTreasureId(e.treasure_id)) {
+        players[e.pseudo].soloCount += 1;
+        players[e.pseudo].globalScore += SCORE_POINTS_SOLO;
+      } else {
+        players[e.pseudo].flashCount += 1;
+        players[e.pseudo].globalScore += SCORE_POINTS_FLASH;
+      }
+      players[e.pseudo].totalDurationSec += _safeDurationSec(e.duration_sec);
+    } else {
+      return;
+    }
+
     const captureMs = Date.parse(e.created_at || '');
     if (Number.isFinite(captureMs) && captureMs < players[e.pseudo].lastCaptureAtMs) {
       players[e.pseudo].lastCaptureAtMs = captureMs;
@@ -64,22 +112,29 @@ function _computeLeaderboardScores(events) {
   const rows = Object.entries(players)
     .map(([pseudo, d]) => {
       const flashCount = d.flashCount;
+      const soloCount = d.soloCount;
+      const fixedCount = d.fixedCount;
       const allFixed = false;
-      const globalScore = flashCount;
+      const globalScore = d.globalScore;
       const lastCaptureAtMs = Number.isFinite(d.lastCaptureAtMs) ? d.lastCaptureAtMs : Number.POSITIVE_INFINITY;
       return {
         pseudo,
         flashCount,
+        soloCount,
+        fixedCount,
         totalDurationSec: d.totalDurationSec,
         lastCaptureAtMs,
         globalScore,
         allFixed
       };
     })
-    .filter(r => r.flashCount > 0);
+    .filter(r => (r.flashCount + r.soloCount + r.fixedCount) > 0);
 
   rows.sort((a, b) => {
-    if (b.flashCount !== a.flashCount) return b.flashCount - a.flashCount;
+    if (b.globalScore !== a.globalScore) return b.globalScore - a.globalScore;
+    const bCount = b.flashCount + b.soloCount + b.fixedCount;
+    const aCount = a.flashCount + a.soloCount + a.fixedCount;
+    if (bCount !== aCount) return bCount - aCount;
     if (a.totalDurationSec !== b.totalDurationSec) return a.totalDurationSec - b.totalDurationSec;
     if (a.lastCaptureAtMs !== b.lastCaptureAtMs) return a.lastCaptureAtMs - b.lastCaptureAtMs;
     return a.pseudo.localeCompare(b.pseudo, 'fr', { sensitivity: 'base' });
@@ -98,9 +153,10 @@ function _renderLeaderboard({ rows, totalFixed, myData, myRankNum }) {
     pseudo: myPseudo || '',
     rank: myRankNum || null,
     totalPlayers: rows.length,
-    fixedCount: 0,
+    fixedCount: myData ? myData.fixedCount : 0,
     totalFixed: totalFixed || 0,
     flashCount: myData ? myData.flashCount : 0,
+    soloCount: myData ? myData.soloCount : 0,
     totalDurationSec: myData ? myData.totalDurationSec : 0,
     fixedDuration: null,
     allFixed: myData ? !!myData.allFixed : false,
@@ -116,8 +172,8 @@ function _renderLeaderboard({ rows, totalFixed, myData, myRankNum }) {
       <div class="my-card-pseudo">${escHtml(myPseudo)}</div>
       <div class="my-card-sub">Classement global</div>
       <div class="my-card-stats">
-        <strong>${_lbIcon('flash', 'flash')}${myData.flashCount}</strong>
-        <span>${_lbIcon('clock', 'muted')}${_fmtDurationSec(myData.totalDurationSec)}</span>
+        <strong>${_lbIcon('score', 'warn')}${myData.globalScore}</strong>
+        <span>⚡ ${myData.flashCount} · 🕶 ${myData.soloCount} · 📍 ${myData.fixedCount}</span>
       </div>
       <button class="btn-share" id="scoreShareBtn" style="margin-top:10px;padding:11px 12px;font-size:0.88rem" onclick="shareScoreResult()">📤 Partager mon score</button>
     </div>`;
@@ -147,8 +203,8 @@ function _renderLeaderboard({ rows, totalFixed, myData, myRankNum }) {
         <div class="lb-body">
           <div class="lb-name">${escHtml(p.pseudo)}</div>
           <div class="lb-score">
-            <strong>${_lbIcon('flash', 'flash')}${p.flashCount}</strong>
-            <span>${_lbIcon('clock', 'muted')}${_fmtDurationSec(p.totalDurationSec)}</span>
+            <strong>${_lbIcon('score', 'warn')}${p.globalScore}</strong>
+            <span>⚡ ${p.flashCount} · 🕶 ${p.soloCount} · 📍 ${p.fixedCount}</span>
           </div>
         </div>
       </div>`;
@@ -169,7 +225,7 @@ function _toLeaderboardSnapshot(computed) {
 async function getLeaderboardSnapshot(forceRefresh = false) {
   if (!forceRefresh && _leaderboardSnapshot) return _leaderboardSnapshot;
   const data = await _fetchLeaderboardData();
-  const computed = _computeLeaderboardScores(data.events);
+  const computed = _computeLeaderboardScores(data.events, data.cfg || {});
   _leaderboardSnapshot = _toLeaderboardSnapshot(computed);
   return _leaderboardSnapshot;
 }

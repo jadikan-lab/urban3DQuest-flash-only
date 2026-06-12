@@ -28,18 +28,24 @@ function _isFoundByPseudo(treasure, pseudo) {
 
 function updateScoreFixedCaptureCta() {
   const btn = document.getElementById('scoreFixedCaptureBtn');
-  if (!btn) return;
+  const calcBtn = document.getElementById('scorePointsCalcBtn');
+  if (!btn && !calcBtn) return;
   const visible = activeTab === 'scores';
   const enabled = !!myPseudo;
-  btn.style.display = visible ? 'inline-flex' : 'none';
-  btn.disabled = !enabled;
-  btn.setAttribute('aria-disabled', enabled ? 'false' : 'true');
-  if (enabled) {
-    btn.title = 'Valider une balise fixe sans GPS';
-    btn.textContent = 'J\'ai trouve une balise fixe';
-  } else {
-    btn.title = 'Connecte-toi pour valider une balise fixe';
-    btn.textContent = 'Connecte-toi pour valider';
+  if (btn) {
+    btn.style.display = visible ? 'inline-flex' : 'none';
+    btn.disabled = !enabled;
+    btn.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+    if (enabled) {
+      btn.title = 'Valider une balise fixe sans GPS';
+      btn.textContent = 'J\'ai trouve une balise fixe';
+    } else {
+      btn.title = 'Connecte-toi pour valider une balise fixe';
+      btn.textContent = 'Connecte-toi pour valider';
+    }
+  }
+  if (calcBtn) {
+    calcBtn.style.display = visible ? 'inline-flex' : 'none';
   }
 }
 
@@ -99,20 +105,30 @@ function showTab(name, btn) {
 }
 
 function _getFlashCollectionStats() {
-  const allCollectibles = Array.isArray(treasures)
-    ? treasures.filter(t => t && (t.type === 'unique' || t.type === 'fixed'))
+  const tracked = Array.isArray(treasures)
+    ? treasures.filter(t => t && t.type === 'unique' && !t.solo_hidden)
     : [];
-  const visible = allCollectibles.filter(t => !t.solo_hidden);
-  const hiddenUnlocked = myPseudo
-    ? allCollectibles.filter(t => t.solo_hidden && _isFoundByPseudo(t, myPseudo))
-    : [];
-  const total = visible.length + hiddenUnlocked.length;
-  const tracked = [...visible, ...hiddenUnlocked];
+  const total = tracked.length;
   const found = myPseudo
     ? tracked.filter(t => _isFoundByPseudo(t, myPseudo)).length
     : tracked.filter(t => t.found_by && t.found_by.length > 0).length;
   const remaining = Math.max(0, total - found);
   return { total, found, remaining };
+}
+
+function openPointsCalcModal() {
+  const box = document.getElementById('pointsCalcModal');
+  if (!box) return;
+  const copy = document.getElementById('pointsCalcCopy');
+  if (copy) {
+    copy.textContent = 'Classement global: Flash = 100 pts, Solo = 100 pts, Fixe = 35 pts. Le reset se fait par nouvelle saison depuis l\'admin.';
+  }
+  box.classList.add('open');
+}
+
+function closePointsCalcModal() {
+  const box = document.getElementById('pointsCalcModal');
+  if (box) box.classList.remove('open');
 }
 
 function updateCollectionProgress() {
@@ -178,7 +194,7 @@ function shareScoreResult() {
   }
 
   const rankTxt = d.rank && d.totalPlayers ? `#${d.rank}/${d.totalPlayers}` : '—';
-  const text = `🏙 Urban3DQuest Flash · Jadikan\n👤 ${d.pseudo}\n🏅 Rang global ${rankTxt}\n⭐ Score ${d.globalScore || 0}\n⚡ Flash ${d.flashCount}\n\nViens jouer : ${playUrl}`;
+  const text = `🏙 Urban3DQuest Flash · Jadikan\n👤 ${d.pseudo}\n🏅 Rang global ${rankTxt}\n⭐ Score global ${d.globalScore || 0}\n⚡ Flash ${d.flashCount || 0}\n🕶 Solo ${d.soloCount || 0}\n📍 Fixe ${d.fixedCount || 0}\n\nViens jouer : ${playUrl}`;
 
   const cardModel = {
     kicker: 'SCORE JOUEUR',
@@ -187,9 +203,11 @@ function shareScoreResult() {
     accent: 'score',
     metrics: [
       { label: 'Score', value: String(d.globalScore || 0) },
-      { label: 'Flash', value: String(d.flashCount || 0) }
+      { label: 'Flash', value: String(d.flashCount || 0) },
+      { label: 'Solo', value: String(d.soloCount || 0) },
+      { label: 'Fixe', value: String(d.fixedCount || 0) }
     ],
-    footer: 'Mode flash uniquement',
+    footer: 'Classement global',
     shareUrl: playUrl
   };
 
@@ -423,8 +441,15 @@ async function loadCarnet() {
     const tMap = Object.fromEntries(treasures.map(t => [t.id, t]));
     el.innerHTML = evts.map(ev => {
       const t = tMap[ev.treasure_id];
-      const label = t ? escHtml(tLabel(t)) : escHtml(ev.treasure_id);
-      const typeLabel = ev.treasure_type === 'fixed' ? 'Fixe' : 'Flash';
+      const isSolo = /^solo[-_ ]?\d+/i.test(String(ev.treasure_id || ''));
+      const fallbackLabel = tLabel({
+        id: ev.treasure_id,
+        type: ev.treasure_type,
+        solo_hidden: isSolo,
+        label: ''
+      });
+      const label = t ? escHtml(tLabel(t)) : escHtml(fallbackLabel);
+      const typeLabel = ev.treasure_type === 'fixed' ? 'Fixe' : (isSolo ? 'Solo' : 'Flash');
       const typeClass = ev.treasure_type === 'fixed' ? 'cn-fixed' : 'cn-unique';
       const date = new Date(ev.created_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
       const durStr = ev.duration_sec ? `⏱ ${formatDuration(ev.duration_sec)}` : '';
@@ -434,7 +459,7 @@ async function loadCarnet() {
         const url = safeImgUrl(getPhotoUrls(t.photo_url)[0]);
         if (url) photoHtml = `<img class="cn-thumb" src="${escHtml(url)}" alt="" loading="lazy" onclick="openPhotoViewer('${jsSingleQuoted(url)}')" style="cursor:zoom-in">`;
       }
-      if (!photoHtml) photoHtml = `<div class="cn-thumb-placeholder">⚡</div>`;
+      if (!photoHtml) photoHtml = `<div class="cn-thumb-placeholder">${ev.treasure_type === 'fixed' ? '📍' : (isSolo ? '🕶' : '⚡')}</div>`;
       const hintHtml = t && t.hint ? `<div class="cn-hint">${escHtml(t.hint)}</div>` : '';
       return `<div class="cn-card ${typeClass}">
         ${photoHtml}

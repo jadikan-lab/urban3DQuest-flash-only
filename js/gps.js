@@ -209,10 +209,33 @@ function destinationPoint(lat, lng, bearing, distM) {
   return [lat2 * 180/Math.PI, lng2 * 180/Math.PI];
 }
 
+function _extractTreasureNumber(t) {
+  if (!t) return null;
+  const fromId = String(t.id || '').match(/(\d+)(?!.*\d)/);
+  if (fromId) return Number(fromId[1]);
+  const fromLabel = String(t.label || '').match(/(\d+)(?!.*\d)/);
+  if (fromLabel) return Number(fromLabel[1]);
+  return null;
+}
+
+function _isSoloTreasure(t) {
+  if (!t) return false;
+  if (t.solo_hidden) return true;
+  return /^solo[-_ ]?\d+/i.test(String(t.id || '')) || /^solo[-_ ]?\d+/i.test(String(t.label || ''));
+}
+
 // Human-readable label for a treasure (never shows raw ID or generic "sans nom")
 function tLabel(t) {
-  if (t.label && t.label.trim()) return t.label.trim();
-  return '⚡ Flash';
+  const num = _extractTreasureNumber(t);
+  if (t && t.type === 'fixed' && Number.isFinite(num)) {
+    return 'FIX-' + String(Math.max(1, Math.min(99, num))).padStart(2, '0');
+  }
+  if (t && t.type === 'unique' && Number.isFinite(num)) {
+    if (_isSoloTreasure(t)) return 'SOLO-' + String(Math.max(1, Math.min(999, num))).padStart(3, '0');
+    return 'FLASH-' + String(Math.max(1, Math.min(999, num))).padStart(3, '0');
+  }
+  if (t && t.label && t.label.trim()) return t.label.trim();
+  return t && t.type === 'fixed' ? 'FIX-00' : 'FLASH-000';
 }
 
 function distLabel(d) {
