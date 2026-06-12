@@ -5,6 +5,13 @@ const SCORE_POINTS_FLASH = 50;
 const SCORE_POINTS_SOLO = 50;
 const SCORE_POINTS_FIXED = 35;
 
+function _fixedQuestBonus(fixedCount) {
+  if (fixedCount >= 4) return 35;
+  if (fixedCount >= 3) return 20;
+  if (fixedCount >= 2) return 10;
+  return 0;
+}
+
 function _isSoloTreasureId(treasureId) {
   return /^solo[-_ ]?\d+/i.test(String(treasureId || ''));
 }
@@ -76,6 +83,7 @@ function _fmtDurationSec(totalSec) {
 function _computeLeaderboardScores(events, cfg, treasures) {
   const totalFixed = 0;
   const scopedEvents = _filterEventsForActiveQuests(events, cfg, treasures);
+  const questByTreasureId = Object.fromEntries((treasures || []).map(t => [String(t.id), String(t.quest || '').trim()]));
 
   const players = {};
   scopedEvents.forEach(e => {
@@ -86,14 +94,22 @@ function _computeLeaderboardScores(events, cfg, treasures) {
         flashCount: 0,
         soloCount: 0,
         fixedCount: 0,
+        fixedQuestBonus: 0,
         totalDurationSec: 0,
-        lastCaptureAtMs: Number.POSITIVE_INFINITY
+        lastCaptureAtMs: Number.POSITIVE_INFINITY,
+        fixedQuestTreasures: Object.create(null)
       };
     }
 
     if (e.treasure_type === 'fixed') {
       players[e.pseudo].fixedCount += 1;
       players[e.pseudo].globalScore += SCORE_POINTS_FIXED;
+      const quest = questByTreasureId[String(e.treasure_id)] || '';
+      if (quest) {
+        const bucket = players[e.pseudo].fixedQuestTreasures;
+        if (!bucket[quest]) bucket[quest] = Object.create(null);
+        bucket[quest][String(e.treasure_id)] = true;
+      }
     } else if (e.treasure_type === 'unique') {
       if (_isSoloTreasureId(e.treasure_id)) {
         players[e.pseudo].soloCount += 1;
@@ -113,6 +129,15 @@ function _computeLeaderboardScores(events, cfg, treasures) {
     }
   });
 
+  Object.values(players).forEach(player => {
+    const fixedQuestBonus = Object.values(player.fixedQuestTreasures).reduce((sum, treasureMap) => {
+      const fixedInQuest = Object.keys(treasureMap || {}).length;
+      return sum + _fixedQuestBonus(fixedInQuest);
+    }, 0);
+    player.fixedQuestBonus = fixedQuestBonus;
+    player.globalScore += fixedQuestBonus;
+  });
+
   const rows = Object.entries(players)
     .map(([pseudo, d]) => {
       const flashCount = d.flashCount;
@@ -120,12 +145,14 @@ function _computeLeaderboardScores(events, cfg, treasures) {
       const fixedCount = d.fixedCount;
       const allFixed = false;
       const globalScore = d.globalScore;
+      const fixedQuestBonus = d.fixedQuestBonus;
       const lastCaptureAtMs = Number.isFinite(d.lastCaptureAtMs) ? d.lastCaptureAtMs : Number.POSITIVE_INFINITY;
       return {
         pseudo,
         flashCount,
         soloCount,
         fixedCount,
+        fixedQuestBonus,
         totalDurationSec: d.totalDurationSec,
         lastCaptureAtMs,
         globalScore,

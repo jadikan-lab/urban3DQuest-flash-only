@@ -119,10 +119,19 @@ function _getFlashCollectionStats() {
 function openPointsCalcModal() {
   const box = document.getElementById('pointsCalcModal');
   if (!box) return;
+  const title = document.getElementById('pointsCalcTitle');
   const copy = document.getElementById('pointsCalcCopy');
-  if (copy) {
-    copy.textContent = 'Classement global: Flash = 50 pts, Solo = 50 pts, Fixe = 35 pts.';
+  const closeBtn = document.getElementById('pointsCalcCloseBtn');
+  if (title) {
+    title.textContent = _uiCopy('SCORE_MODAL_TITLE', 'Calcul des points');
   }
+  if (copy) {
+    copy.textContent = _uiCopy(
+      'SCORE_MODAL_COPY',
+      'Classement global : Flash = 50 pts, Solo = 50 pts, Fixe = 35 pts. Plus tu trouves de balises fixes, plus le bonus monte : 2 Fixes = +10 pts, 3 Fixes = +20 pts, 4 Fixes ou plus = +35 pts.'
+    );
+  }
+  if (closeBtn) closeBtn.textContent = _uiCopy('SCORE_MODAL_CLOSE', 'Fermer');
   box.classList.add('open');
 }
 

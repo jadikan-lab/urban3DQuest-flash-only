@@ -154,6 +154,16 @@ REPORT_MODAL_CLOSE:        Fermer
 
 ---
 
+## MODAL SCORE
+
+```
+SCORE_MODAL_TITLE:        Calcul des points
+SCORE_MODAL_COPY:         Classement global : Flash = 50 pts, Solo = 50 pts, Fixe = 35 pts. Plus tu trouves de balises fixes, plus le bonus monte : 2 Fixes = +10 pts, 3 Fixes = +20 pts, 4 Fixes ou plus = +35 pts.
+SCORE_MODAL_CLOSE:        Fermer
+```
+
+---
+
 ## MESSAGES DE RETOUR (toast bienvenue)
 
 ```
