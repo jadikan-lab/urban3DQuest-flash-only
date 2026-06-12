@@ -632,15 +632,8 @@ async function loadMoi() {
   }
 
   const pseudo = myPseudo || 'Invité';
-  const grad = pseudoGradient(pseudo);
-  const progressTpl = _uiCopy('COMPTE_PROGRESS_TEMPLATE', '{F} miniatures trouvees sur {T} cachees ({R} restantes)');
   el.innerHTML = `
-    <div class="moi-avatar" style="background:${grad}">${escHtml(pseudo.charAt(0))}</div>
     <div class="moi-pseudo">${escHtml(pseudo)}</div>
-    <div class="moi-progress">${escHtml(progressTpl
-      .replace('{F}', String(stats.found))
-      .replace('{T}', String(stats.total))
-      .replace('{R}', String(stats.remaining)))}</div>
     <div class="moi-grid">
       <div class="moi-tile"><div class="moi-tile-val">${myUnique}</div><div class="moi-tile-lbl">Flash</div></div>
       <div class="moi-tile"><div class="moi-tile-val">${myFixed}</div><div class="moi-tile-lbl">Fixes</div></div>
