@@ -165,6 +165,7 @@ let mapVisualAngle = null;
 let mapCenter    = [45.1885, 5.7245]; // default Grenoble, overridden by config
 let gameStart    = null;  // Date or null — reference timestamp for score calc
 let gameCode     = '';    // empty = open access
+let activeQuests = [];    // active quest names used to scope treasures and scoring
 let egressEmergencyMode = false; // true = reduce heavy public reads during incidents
 let playerLat    = null, playerLng = null;
 let playerAccuracy = null; // GPS accuracy in meters

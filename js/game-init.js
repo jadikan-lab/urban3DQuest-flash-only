@@ -30,6 +30,16 @@ async function initGame(pendingFoundId) {
       const gs = new Date(c.gameStart);
       if (!isNaN(gs.getTime())) gameStart = gs;
     }
+    if (c.activeQuests) {
+      try {
+        const parsed = JSON.parse(c.activeQuests);
+        activeQuests = Array.isArray(parsed) ? parsed.map(q => String(q || '').trim()).filter(Boolean) : [];
+      } catch {
+        activeQuests = [];
+      }
+    } else if (c.activeQuest) {
+      activeQuests = [String(c.activeQuest).trim()].filter(Boolean);
+    }
     const requiredVersion = c.minSupportedVersion || c.minAppVersion || '';
     if (!enforceMinSupportedVersion(requiredVersion)) return;
     realtimeEnabled = c.realtimeEnabled === 'true';
@@ -312,9 +322,14 @@ async function loadTreasures() {
     return;
   }
   if (!data) return;
-  // Flash-only fork: keep unique + fixed for QR validation and collection;
-  // map rendering decides what is visible to players.
-  treasures = data.filter(t => t.type === 'unique' || t.type === 'fixed');
+  const isTreasureInActiveQuest = (t) => {
+    if (!Array.isArray(activeQuests) || activeQuests.length === 0) return true;
+    const quest = String(t && t.quest ? t.quest : '').trim();
+    return !!quest && activeQuests.includes(quest);
+  };
+  // Flash-only fork: keep unique + fixed for QR validation and collection,
+  // scoped to currently active quests.
+  treasures = data.filter(t => (t.type === 'unique' || t.type === 'fixed') && isTreasureInActiveQuest(t));
   // Detect flash treasures taken by someone else while we were nearby
   if (_prevAvailableFlash.size > 0 && playerLat !== null && activeGameMode === 'unique') {
     const newlyTaken = treasures.filter(t =>

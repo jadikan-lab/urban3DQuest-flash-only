@@ -20,37 +20,41 @@ async function _fetchLeaderboardData() {
     .select('pseudo,treasure_id,treasure_type,duration_sec,created_at')
     .order('created_at', { ascending: true });
   if (gameStart) evQuery = evQuery.gte('created_at', gameStart.toISOString());
-  const [evRes, cfgRes] = await Promise.all([
+  const [evRes, cfgRes, trRes] = await Promise.all([
     evQuery,
-    db.from('config').select('key,value')
+    db.from('config').select('key,value'),
+    db.from('treasures').select('id,quest')
   ]);
   if (evRes.error) throw new Error('Supabase : ' + evRes.error.message);
+  if (trRes.error) throw new Error('Supabase : ' + trRes.error.message);
   return {
     events: evRes.data || [],
-    cfg: Object.fromEntries((cfgRes.data || []).map(r => [r.key, r.value]))
+    cfg: Object.fromEntries((cfgRes.data || []).map(r => [r.key, r.value])),
+    treasures: trRes.data || []
   };
 }
 
-function _getSeasonBounds(cfg) {
-  const startRaw = String(cfg?.seasonStartAt || cfg?.season_start_at || '').trim();
-  const endRaw = String(cfg?.seasonEndAt || cfg?.season_end_at || '').trim();
-  const startMs = startRaw ? Date.parse(startRaw) : null;
-  const endMs = endRaw ? Date.parse(endRaw) : null;
-  return {
-    startMs: Number.isFinite(startMs) ? startMs : null,
-    endMs: Number.isFinite(endMs) ? endMs : null
-  };
+function _parseActiveQuests(cfg) {
+  const fromJson = String(cfg?.activeQuests || '').trim();
+  if (fromJson) {
+    try {
+      const parsed = JSON.parse(fromJson);
+      if (Array.isArray(parsed)) return parsed.map(q => String(q || '').trim()).filter(Boolean);
+    } catch {
+      // ignore malformed config and fallback below
+    }
+  }
+  const single = String(cfg?.activeQuest || '').trim();
+  return single ? [single] : [];
 }
 
-function _filterEventsForSeason(events, cfg) {
-  const { startMs, endMs } = _getSeasonBounds(cfg);
-  if (!startMs && !endMs) return events;
+function _filterEventsForActiveQuests(events, cfg, treasures) {
+  const active = _parseActiveQuests(cfg);
+  if (!active.length) return events;
+  const questByTreasureId = Object.fromEntries((treasures || []).map(t => [String(t.id), String(t.quest || '').trim()]));
   return events.filter(e => {
-    const t = Date.parse(e.created_at || '');
-    if (!Number.isFinite(t)) return false;
-    if (startMs && t < startMs) return false;
-    if (endMs && t > endMs) return false;
-    return true;
+    const quest = questByTreasureId[String(e.treasure_id)] || '';
+    return !!quest && active.includes(quest);
   });
 }
 
@@ -69,9 +73,9 @@ function _fmtDurationSec(totalSec) {
   return `${m}m ${String(s).padStart(2, '0')}s`;
 }
 
-function _computeLeaderboardScores(events, cfg) {
+function _computeLeaderboardScores(events, cfg, treasures) {
   const totalFixed = 0;
-  const scopedEvents = _filterEventsForSeason(events, cfg);
+  const scopedEvents = _filterEventsForActiveQuests(events, cfg, treasures);
 
   const players = {};
   scopedEvents.forEach(e => {
@@ -225,7 +229,7 @@ function _toLeaderboardSnapshot(computed) {
 async function getLeaderboardSnapshot(forceRefresh = false) {
   if (!forceRefresh && _leaderboardSnapshot) return _leaderboardSnapshot;
   const data = await _fetchLeaderboardData();
-  const computed = _computeLeaderboardScores(data.events, data.cfg || {});
+  const computed = _computeLeaderboardScores(data.events, data.cfg || {}, data.treasures || []);
   _leaderboardSnapshot = _toLeaderboardSnapshot(computed);
   return _leaderboardSnapshot;
 }

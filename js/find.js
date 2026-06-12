@@ -21,7 +21,10 @@ function _isMissingSecureFindRpcError(error) {
 }
 
 function _isTreasureAllowedInActiveScope(treasure) {
-  return !!treasure;
+  if (!treasure) return false;
+  if (!Array.isArray(activeQuests) || activeQuests.length === 0) return true;
+  const quest = String(treasure.quest || '').trim();
+  return !!quest && activeQuests.includes(quest);
 }
 
 async function _rollbackFoundBy(treasure, previousFoundBy, expectedFoundBy) {
