@@ -262,6 +262,7 @@ function _getNearestAvailableUniqueForPlayer() {
   let nearest = null;
   for (const t of treasures) {
     if (!t || t.type !== 'unique') continue;
+    if (t.solo_hidden) continue;
     if (t.found_by && t.found_by.length > 0) continue;
     availableCount += 1;
 
@@ -278,13 +279,26 @@ function _getNearestAvailableUniqueForPlayer() {
 }
 
 function updateRadar() {
-  if (playerLat === null) return;
+  const flashFabEl = document.getElementById('flashFab');
+  if (playerLat === null) {
+    if (flashFabEl) flashFabEl.style.display = 'none';
+    flashCaptureStickyId = null;
+    nearestUnique = null;
+    hideFlashHint();
+    return;
+  }
   const bar = document.getElementById('radarBar');
-  if (activeTab !== 'explore') { bar.style.display = 'none'; return; }
+  if (activeTab !== 'explore') {
+    bar.style.display = 'none';
+    if (flashFabEl) flashFabEl.style.display = 'none';
+    flashCaptureStickyId = null;
+    nearestUnique = null;
+    hideFlashHint();
+    return;
+  }
   bar.style.display = 'block';
   const copy = (key, fallback = '') => (window.u3dqCopyText ? window.u3dqCopyText(key, fallback) : fallback);
 
-  const flashFabEl = document.getElementById('flashFab');
   if (!myPseudo) {
     bar.textContent = '👀 Mode invité — carte visible · pas de score · tape en haut pour jouer';
     bar.className = '';
