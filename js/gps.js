@@ -318,13 +318,19 @@ function updateRadar() {
 
     const flashFab = document.getElementById('flashFab');
     const accForFlash = Math.max(0, Math.round(playerAccuracy || 0));
-    // Enter/exit thresholds are anchored to the displayed search circle to match player expectation.
+    const trueDistToTreasure = haversine(playerLat, playerLng, nearestU.t.lat, nearestU.t.lng);
+    // Keep circle-based guidance, but only unlock scanner when actually close to the real point.
     const flashCaptureInM = Math.max(nearestU.zone.radiusM, FLASH_CAPTURE_M) + Math.min(12, Math.round(accForFlash * 0.35));
     const stickyForSameTarget = flashCaptureStickyId === nearestU.t.id;
     const flashCaptureOutM = flashCaptureInM + 8;
     const inFlashCaptureZone = nearestU.centerDist <= (stickyForSameTarget ? flashCaptureOutM : flashCaptureInM);
+    const trueDistInM = FLASH_SCAN_TRUE_DIST_M + Math.min(8, Math.round(accForFlash * 0.25));
+    const trueDistOutM = trueDistInM + 6;
+    const inTrueCaptureZone = trueDistToTreasure <= (stickyForSameTarget ? trueDistOutM : trueDistInM);
+    const gpsAccOk = !Number.isFinite(playerAccuracy) || playerAccuracy <= FLASH_SCAN_MAX_GPS_ACC_M;
+    const canUnlockScan = inFlashCaptureZone && inTrueCaptureZone && gpsAccOk;
 
-    if (inFlashCaptureZone) {
+    if (canUnlockScan) {
       // Two-state UX: inside displayed search circle => scan is available.
       bar.textContent = '';
       bar.className = '';
@@ -394,10 +400,16 @@ async function captureUnique() {
     const accForFlash = Math.max(0, Math.round(playerAccuracy || 0));
     const { nearest } = _getNearestAvailableUniqueForPlayer();
     if (nearest) {
+      const trueDistToTreasure = haversine(playerLat, playerLng, nearest.t.lat, nearest.t.lng);
       const flashCaptureInM = Math.max(nearest.zone.radiusM, FLASH_CAPTURE_M) + Math.min(12, Math.round(accForFlash * 0.35));
       const stickyForSameTarget = flashCaptureStickyId === nearest.t.id;
       const flashCaptureOutM = flashCaptureInM + 8;
-      if (nearest.centerDist <= (stickyForSameTarget ? flashCaptureOutM : flashCaptureInM)) target = nearest.t;
+      const inFlashCaptureZone = nearest.centerDist <= (stickyForSameTarget ? flashCaptureOutM : flashCaptureInM);
+      const trueDistInM = FLASH_SCAN_TRUE_DIST_M + Math.min(8, Math.round(accForFlash * 0.25));
+      const trueDistOutM = trueDistInM + 6;
+      const inTrueCaptureZone = trueDistToTreasure <= (stickyForSameTarget ? trueDistOutM : trueDistInM);
+      const gpsAccOk = !Number.isFinite(playerAccuracy) || playerAccuracy <= FLASH_SCAN_MAX_GPS_ACC_M;
+      if (inFlashCaptureZone && inTrueCaptureZone && gpsAccOk) target = nearest.t;
     }
   }
   if (!target) {
