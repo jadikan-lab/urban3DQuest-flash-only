@@ -154,7 +154,7 @@ function openPrelaunchScreen() {
   const meta = document.getElementById('prelaunchMeta');
   if (!screen || !timer) return;
 
-  if (title) title.textContent = 'Lancement bientôt';
+  if (title) title.textContent = 'Pré-lancement';
   if (msg) msg.textContent = prelaunchMessage || 'Le jeu n\'est pas encore ouvert. Ton compte est prêt.';
 
   const tick = () => {
