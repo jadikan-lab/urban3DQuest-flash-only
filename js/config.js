@@ -17,8 +17,8 @@ function resolveSupabaseEnv() {
 const SUPABASE_ENV = resolveSupabaseEnv();
 const SUPABASE_URL = SUPABASE_ENV.url;
 const SUPABASE_KEY = SUPABASE_ENV.key;
-const GAME_VERSION = 'v4.0.4';
-const ASSET_VERSION = '20260624-v404';
+const GAME_VERSION = 'v4.0.5';
+const ASSET_VERSION = '20260624-v405';
 const loginVersion = document.getElementById('loginVersion');
 if (loginVersion) loginVersion.textContent = 'JOUEUR · ' + GAME_VERSION + ' · ' + SUPABASE_ENV.label;
 document.getElementById('gameVersion').textContent = 'Urban3DQuest.fr · Jadikan ' + GAME_VERSION + ' · JOUEUR · ' + SUPABASE_ENV.label;
@@ -178,9 +178,9 @@ let nearestUnique = null;
 let flashCaptureStickyId = null; // keep flash scanner visible briefly to avoid GPS flicker near threshold
 const FLASH_CAPTURE_M = 20; // metres — seuil d'apparition du FAB Flash
 const FLASH_HINT_M   = 50; // metres — seuil de révélation de la photo indice
-const FLASH_ZONE_RADIUS_M = 90; // metres — visual search circle radius shown on the map
-const FLASH_ZONE_OFFSET_MIN_M = 40; // metres — minimum offset between true point and circle center
-const FLASH_ZONE_OFFSET_MAX_M = 80; // metres — maximum offset between true point and circle center
+let flashZoneRadiusM = 45; // metres — visual search circle radius shown on the map
+let flashZoneOffsetMinM = 20; // metres — minimum offset between true point and circle center
+let flashZoneOffsetMaxM = 40; // metres — maximum offset between true point and circle center
 const FLASH_SCAN_TRUE_DIST_M = 35; // metres — real distance to true point required to enable scan
 const FLASH_SCAN_MAX_GPS_ACC_M = 35; // metres — disable scan when GPS accuracy is weaker than this
 let geoWatch        = null;
@@ -218,6 +218,22 @@ function _smoothHeading(prev, next, factor) {
   return _normHeading(prev + delta * factor);
 }
 
+function normalizeFlashZoneConfig() {
+  const radius = Number(flashZoneRadiusM);
+  const offsetMin = Number(flashZoneOffsetMinM);
+  const offsetMax = Number(flashZoneOffsetMaxM);
+
+  flashZoneRadiusM = Number.isFinite(radius) ? Math.max(15, Math.round(radius)) : 45;
+  const maxAllowedOffset = Math.max(0, flashZoneRadiusM - 5);
+  flashZoneOffsetMinM = Number.isFinite(offsetMin) ? Math.max(0, Math.round(offsetMin)) : 20;
+  flashZoneOffsetMinM = Math.min(flashZoneOffsetMinM, maxAllowedOffset);
+  flashZoneOffsetMaxM = Number.isFinite(offsetMax) ? Math.max(flashZoneOffsetMinM, Math.round(offsetMax)) : 40;
+  flashZoneOffsetMaxM = Math.min(flashZoneOffsetMaxM, maxAllowedOffset);
+  if (flashZoneOffsetMaxM < flashZoneOffsetMinM) flashZoneOffsetMinM = flashZoneOffsetMaxM;
+}
+
+normalizeFlashZoneConfig();
+
 // Flash map circle helper: deterministic pseudo-random center offset from treasure id.
 function getFlashSearchZone(t) {
   if (!t || !t.id) return null;
@@ -225,13 +241,13 @@ function getFlashSearchZone(t) {
   const tid = String(t.id);
   for (let i = 0; i < tid.length; i++) seed = (seed * 31 + tid.charCodeAt(i)) & 0xffffffff;
   const angle = (seed % 628) / 100; // 0..2pi
-  const offsetM = FLASH_ZONE_OFFSET_MIN_M
-    + (Math.abs(seed >> 8) % (FLASH_ZONE_OFFSET_MAX_M - FLASH_ZONE_OFFSET_MIN_M + 1));
+  const offsetSpan = Math.max(0, flashZoneOffsetMaxM - flashZoneOffsetMinM);
+  const offsetM = flashZoneOffsetMinM + (offsetSpan ? (Math.abs(seed >> 8) % (offsetSpan + 1)) : 0);
   const mPerLat = 111320;
   const mPerLng = 111320 * Math.cos(t.lat * Math.PI / 180);
   const centerLat = t.lat + (offsetM * Math.sin(angle)) / mPerLat;
   const centerLng = t.lng + (offsetM * Math.cos(angle)) / mPerLng;
-  return { centerLat, centerLng, radiusM: FLASH_ZONE_RADIUS_M, offsetM };
+  return { centerLat, centerLng, radiusM: flashZoneRadiusM, offsetM };
 }
 
 function _nextVisualAngle(previous, target) {

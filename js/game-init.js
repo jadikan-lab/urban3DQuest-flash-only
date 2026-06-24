@@ -19,6 +19,10 @@ async function initGame(pendingFoundId) {
   if (cfg) {
     const c = Object.fromEntries(cfg.map(r => [r.key, r.value]));
     if (c.proximityRadius) proximityR = Number(c.proximityRadius);
+    if (c.flashZoneRadiusM) flashZoneRadiusM = Number(c.flashZoneRadiusM);
+    if (c.flashZoneOffsetMinM) flashZoneOffsetMinM = Number(c.flashZoneOffsetMinM);
+    if (c.flashZoneOffsetMaxM) flashZoneOffsetMaxM = Number(c.flashZoneOffsetMaxM);
+    normalizeFlashZoneConfig();
     if (c.modeMap !== undefined)     modeMap     = c.modeMap !== 'false';
     if (c.modeCompass !== undefined) modeCompass = c.modeCompass !== 'false';
     if (c.gameActive === 'false') showPause();
