@@ -428,8 +428,10 @@ function showPause() { document.getElementById('pauseScreen').classList.add('ope
 async function loadCarnet() {
   const el = document.getElementById('carnetList');
   const countEl = document.getElementById('carnetCount');
+  const titleEl = document.getElementById('carnetTitle');
+  if (titleEl) titleEl.textContent = _uiCopy('COMPTE_COLLECTION_TITRE', 'Mes miniatures');
   if (!myPseudo) {
-    el.innerHTML = `<div class="cn-empty"><span class="cn-empty-icon">📖</span><span class="cn-empty-label">Connecte-toi pour voir ton carnet</span></div>`;
+    el.innerHTML = `<div class="cn-empty"><span class="cn-empty-icon">📖</span><span class="cn-empty-label">${escHtml(_uiCopy('COMPTE_LOGIN_EMPTY', 'Connecte-toi pour voir tes miniatures'))}</span></div>`;
     countEl.textContent = '';
     return;
   }
@@ -441,11 +443,13 @@ async function loadCarnet() {
       .order('created_at', { ascending: false });
     if (error) throw error;
     if (!evts || evts.length === 0) {
-      el.innerHTML = `<div class="cn-empty"><span class="cn-empty-icon">🌍</span><span class="cn-empty-label">Aucune miniature trouvée pour l'instant</span></div>`;
+      el.innerHTML = `<div class="cn-empty"><span class="cn-empty-icon">🌍</span><span class="cn-empty-label">${escHtml(_uiCopy('COMPTE_VIDE', 'Aucune miniature trouvée pour l\'instant'))}</span></div>`;
       countEl.textContent = '';
       return;
     }
-    countEl.textContent = `${evts.length} révélé${evts.length > 1 ? 's' : ''}`;
+    countEl.textContent = _uiCopy('COMPTE_COUNT_TEMPLATE', '{N} revele{S}')
+      .replace('{N}', String(evts.length))
+      .replace('{S}', evts.length > 1 ? 's' : '');
     // Build a quick lookup from treasures already loaded in memory
     const tMap = Object.fromEntries(treasures.map(t => [t.id, t]));
     el.innerHTML = evts.map(ev => {
@@ -671,7 +675,7 @@ async function loadMoi() {
     <div class="moi-grid">
       <div class="moi-tile"><div class="moi-tile-val">${myUnique}</div><div class="moi-tile-lbl">Flash</div></div>
       <div class="moi-tile"><div class="moi-tile-val">${myFixed}</div><div class="moi-tile-lbl">Fixes</div></div>
-      <div class="moi-tile"><div class="moi-tile-val">${stats.total}</div><div class="moi-tile-lbl">Collection</div></div>
+      <div class="moi-tile"><div class="moi-tile-val">${stats.total}</div><div class="moi-tile-lbl">${escHtml(_uiCopy('COMPTE_TOTAL_LABEL', 'Miniatures'))}</div></div>
       <div class="moi-tile"><div class="moi-tile-val">${rank}</div><div class="moi-tile-lbl">Classement</div></div>
     </div>
   `;

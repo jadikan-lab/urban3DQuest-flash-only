@@ -82,6 +82,9 @@ FLASH_RADAR_IN_ZONE:      ⚡ Dans la zone — trouve la miniature
 ## MODAL DE RÉSULTAT — Flash
 
 ```
+FIXED_WIN_LABEL:   BALISE FIXE
+FIXED_WIN_TITRE:   Balise fixe ajoutée
+FIXED_WIN_DESC:    Balise validée sans GPS. Continue la collecte.
 FLASH_WIN_LABEL:   CAPTURÉ
 FLASH_WIN_TITRE:   Miniature Flash capturée
 FLASH_WIN_DESC:    Miniature validée. Partage ta capture et continue la chasse.
@@ -135,8 +138,11 @@ FLASH_ALREADY_TITRE:   Tu as déjà flashé ce polaroid.
 ## ONGLET COMPTE
 
 ```
-COMPTE_COLLECTION_TITRE:  Ma collection
+COMPTE_COLLECTION_TITRE:  Mes miniatures
+COMPTE_TOTAL_LABEL:       Miniatures
 COMPTE_COLLECTION_SOUS:   📷 Polaroids trouvés
+COMPTE_LOGIN_EMPTY:       Connecte-toi pour voir tes miniatures
+COMPTE_COUNT_TEMPLATE:    {N} revele{S}
 COMPTE_VIDE:              Aucune miniature trouvée pour l'instant
 COMPTE_PROGRESS_TEMPLATE: {F} miniatures trouvees sur {T} cachees ({R} restantes)
 COMPTE_REPORT_CTA:        Signaler une miniature introuvable
