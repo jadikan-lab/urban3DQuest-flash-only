@@ -201,6 +201,24 @@ async function refreshPrelaunchConfigAndResume() {
   }
 }
 
+function switchPrelaunchAccount() {
+  prelaunchPendingAction = null;
+  closePrelaunchScreen();
+  localStorage.removeItem('u3dq_pseudo');
+  localStorage.removeItem('u3dq_token');
+  myPseudo = '';
+  myToken = '';
+
+  const err = document.getElementById('pseudoErr');
+  if (err) err.style.display = 'none';
+  const pseudoInput = document.getElementById('pseudoInput');
+  const passInput = document.getElementById('passwordInput');
+  if (pseudoInput) pseudoInput.value = '';
+  if (passInput) passInput.value = '';
+  _setLoginFieldsVisibility(true);
+  if (pseudoInput) pseudoInput.focus();
+}
+
 window.addEventListener('load', async () => {
   const versionReady = await ensureVersionManifestFresh();
   if (!versionReady) return;
