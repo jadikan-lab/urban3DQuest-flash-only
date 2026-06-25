@@ -209,6 +209,8 @@ function shareScoreResult() {
     kicker: 'SCORE JOUEUR',
     title: d.pseudo,
     subtitle: `Rang global ${rankTxt}`,
+    heroMetric: { label: 'Score global', value: String(d.globalScore || 0) },
+    avatarText: String(d.pseudo || '?').charAt(0).toUpperCase(),
     accent: 'score',
     metrics: [
       { label: 'Score', value: String(d.globalScore || 0) },
@@ -251,9 +253,17 @@ function _getShareCaptureStage() {
   stage.id = 'shareCaptureStage';
   stage.innerHTML = `
     <div class="share-capture-card share-capture-flash">
-      <div class="share-capture-kicker"></div>
+      <div class="share-capture-noise" aria-hidden="true"></div>
+      <div class="share-capture-top">
+        <div class="share-capture-kicker"></div>
+        <div class="share-capture-avatar" aria-hidden="true"></div>
+      </div>
       <div class="share-capture-title"></div>
       <div class="share-capture-subtitle"></div>
+      <div class="share-capture-hero">
+        <div class="share-hero-value"></div>
+        <div class="share-hero-label"></div>
+      </div>
       <div class="share-capture-metrics"></div>
       <div class="share-capture-footer"></div>
       <div class="share-capture-url"></div>
@@ -267,8 +277,11 @@ function _renderShareCaptureCard(model) {
   const stage = _getShareCaptureStage();
   const card = stage.querySelector('.share-capture-card');
   const kicker = stage.querySelector('.share-capture-kicker');
+  const avatar = stage.querySelector('.share-capture-avatar');
   const title = stage.querySelector('.share-capture-title');
   const subtitle = stage.querySelector('.share-capture-subtitle');
+  const heroValue = stage.querySelector('.share-hero-value');
+  const heroLabel = stage.querySelector('.share-hero-label');
   const metrics = stage.querySelector('.share-capture-metrics');
   const footer = stage.querySelector('.share-capture-footer');
   const shareUrl = stage.querySelector('.share-capture-url');
@@ -276,17 +289,26 @@ function _renderShareCaptureCard(model) {
   card.classList.toggle('share-capture-flash', model.accent !== 'score');
   card.classList.toggle('share-capture-score', model.accent === 'score');
   kicker.textContent = model.kicker || 'URBAN3DQUEST.FR · JADIKAN';
+  avatar.textContent = model.avatarText || String(model.title || '?').trim().charAt(0).toUpperCase();
   title.textContent = model.title || 'Urban3DQuest.fr · Jadikan';
   subtitle.textContent = model.subtitle || '';
   footer.textContent = model.footer || '';
   shareUrl.textContent = model.shareUrl || (location.origin + location.pathname);
 
-  metrics.innerHTML = (model.metrics || []).map(m => `
+  const allMetrics = Array.isArray(model.metrics) ? model.metrics : [];
+  const fallbackHero = allMetrics[0] || { value: '0', label: 'Score' };
+  const hero = model.heroMetric || fallbackHero;
+  heroValue.textContent = String(hero.value || '0');
+  heroLabel.textContent = String(hero.label || 'Score');
+
+  const secondaryMetrics = model.heroMetric ? allMetrics : allMetrics.slice(1);
+  metrics.innerHTML = secondaryMetrics.map(m => `
     <div class="share-metric">
       <div class="share-metric-value">${escHtml(String(m.value || '—'))}</div>
       <div class="share-metric-label">${escHtml(String(m.label || ''))}</div>
     </div>
   `).join('');
+  metrics.classList.toggle('share-capture-metrics-empty', secondaryMetrics.length === 0);
 
   return card;
 }
@@ -360,6 +382,8 @@ async function shareUniqueCapture() {
     kicker: 'FLASH CAPTURÉ',
     title: data.label || 'Polaroid unique',
     subtitle: `Par ${data.pseudo || myPseudo || 'Joueur'} · ${data.durationText || ''}`,
+    heroMetric: { label: 'Durée', value: data.durationText || '—' },
+    avatarText: String((data.pseudo || myPseudo || 'J').trim().charAt(0) || 'J').toUpperCase(),
     accent: 'flash',
     metrics: [
       { label: 'Durée', value: data.durationText || '—' },
