@@ -474,8 +474,23 @@ async function loadCarnet() {
     countEl.textContent = _uiCopy('COMPTE_COUNT_TEMPLATE', '{N} revele{S}')
       .replace('{N}', String(evts.length))
       .replace('{S}', evts.length > 1 ? 's' : '');
-    // Build a quick lookup from treasures already loaded in memory
+    // Build a lookup from loaded treasures, then backfill missing captured ids.
     const tMap = Object.fromEntries(treasures.map(t => [t.id, t]));
+    const missingTreasureIds = Array.from(new Set(
+      evts
+        .map(ev => String(ev.treasure_id || ''))
+        .filter(id => id && !tMap[id])
+    ));
+    if (missingTreasureIds.length > 0) {
+      const { data: missingRows, error: missingError } = await db.from('treasures')
+        .select('id,type,label,hint,photo_url,solo_hidden')
+        .in('id', missingTreasureIds);
+      if (!missingError && Array.isArray(missingRows)) {
+        missingRows.forEach(t => {
+          if (t && t.id) tMap[t.id] = t;
+        });
+      }
+    }
     el.innerHTML = evts.map(ev => {
       const t = tMap[ev.treasure_id];
       const isSolo = /^solo[-_ ]?\d+/i.test(String(ev.treasure_id || ''));
