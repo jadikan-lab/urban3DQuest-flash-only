@@ -37,10 +37,10 @@ function updateScoreFixedCaptureCta() {
     btn.disabled = !enabled;
     btn.setAttribute('aria-disabled', enabled ? 'false' : 'true');
     if (enabled) {
-      btn.title = 'Valider une balise fixe';
-      btn.textContent = 'Balise fixe trouvee';
+      btn.title = 'Valider une balise fixe ou un polaroid solo';
+      btn.textContent = 'Balise fixe ou solo trouve';
     } else {
-      btn.title = 'Connecte-toi pour valider une balise fixe';
+      btn.title = 'Connecte-toi pour valider une balise fixe ou un polaroid solo';
       btn.textContent = 'Connecte-toi';
     }
   }
