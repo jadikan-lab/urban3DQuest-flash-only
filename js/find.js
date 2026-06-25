@@ -354,10 +354,10 @@ function showFoundResult(status, t, durationSec) {
   if (status === 'success') {
     if (t.type === 'fixed') {
       setFoundIcon('camera', 'teal');
-      label.textContent = _findCopy('FIXED_WIN_LABEL', 'BALISE FIXE');
-      title.textContent = _findCopy('FIXED_WIN_TITRE', 'Balise fixe ajoutée');
+      label.textContent = _findCopy('FIXED_WIN_LABEL', 'BALISE TROUVEE');
+      title.textContent = _findCopy('FIXED_WIN_TITRE', 'Balise ajoutee a ta collection');
       dur.textContent = '';
-      desc.textContent = _findCopy('FIXED_WIN_DESC', 'Balise validée sans GPS. Continue la collecte.');
+      desc.textContent = _findCopy('FIXED_WIN_DESC', 'Bien joue ! Continue la chasse.');
     } else {
       setFoundIcon('flash', 'flash');
       label.textContent = _findCopy('FLASH_WIN_LABEL', 'CAPTURE');

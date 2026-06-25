@@ -37,7 +37,7 @@ function updateScoreFixedCaptureCta() {
     btn.disabled = !enabled;
     btn.setAttribute('aria-disabled', enabled ? 'false' : 'true');
     if (enabled) {
-      btn.title = 'Valider une balise fixe sans GPS';
+      btn.title = 'Valider une balise fixe';
       btn.textContent = 'Balise fixe trouvee';
     } else {
       btn.title = 'Connecte-toi pour valider une balise fixe';

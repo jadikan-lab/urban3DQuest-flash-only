@@ -82,9 +82,9 @@ FLASH_RADAR_IN_ZONE:      ⚡ Dans la zone — trouve la miniature
 ## MODAL DE RÉSULTAT — Flash
 
 ```
-FIXED_WIN_LABEL:   BALISE FIXE
-FIXED_WIN_TITRE:   Balise fixe ajoutée
-FIXED_WIN_DESC:    Balise validée sans GPS. Continue la collecte.
+FIXED_WIN_LABEL:   BALISE TROUVEE
+FIXED_WIN_TITRE:   Balise ajoutee a ta collection
+FIXED_WIN_DESC:    Bien joue ! Continue la chasse.
 FLASH_WIN_LABEL:   CAPTURÉ
 FLASH_WIN_TITRE:   Miniature Flash capturée
 FLASH_WIN_DESC:    Miniature validée. Partage ta capture et continue la chasse.
