@@ -57,12 +57,12 @@ GUIDE_PROGRESS_TEMPLATE: {R} miniatures restantes a cueillir ({F}/{T})
 
 ```
 TUTO_MINI_TITRE:    Chasse Flash
-TUTO_MINI_INTRO:    Repere une miniature, approche-toi, puis scanne son QR pour valider.
+TUTO_MINI_INTRO:    Repere une miniature sur la carte, approche-toi, cueilles la, puis scanne son QR pour valider.
 TUTO_MINI_CARD_TITRE: A savoir
-TUTO_MINI_CARD_TEXTE: Selon les quetes, tu peux aussi trouver des miniatures Solo et des balises Fixes.
+TUTO_MINI_CARD_TEXTE: Selon les quetes, tu peux aussi trouver des miniatures Solo et des balises Fixes dans la ville. Plus d infos sur Insta : @jadikan
 TUTO_MINI_GPS_BTN:  Activer GPS
 TUTO_MINI_CLOSE_BTN: Fermer
-TUTO_MINI_NOTE:     Plus d infos sur Insta : @jadikan
+TUTO_MINI_NOTE:     Plus d infos sur Instagram : @jadikan
 ```
 
 ---
