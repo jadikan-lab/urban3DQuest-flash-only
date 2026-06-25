@@ -271,7 +271,26 @@ function openQuickTutorial() {
   if (cardText) cardText.textContent = copy('TUTO_MINI_CARD_TEXTE', 'Approche-toi, ouvre le scan, capture avant les autres.');
   if (gpsBtn) gpsBtn.textContent = copy('TUTO_MINI_GPS_BTN', 'Activer GPS');
   if (closeBtn) closeBtn.textContent = copy('TUTO_MINI_CLOSE_BTN', 'Fermer');
-  if (note) note.textContent = copy('TUTO_MINI_NOTE', 'Aide optionnelle.');
+  if (note) {
+    const noteText = copy('TUTO_MINI_NOTE', 'Aide optionnelle.');
+    const handle = '@jadikan';
+    note.textContent = '';
+    const idx = noteText.indexOf(handle);
+    if (idx >= 0) {
+      const before = noteText.slice(0, idx);
+      const after = noteText.slice(idx + handle.length);
+      if (before) note.appendChild(document.createTextNode(before));
+      const link = document.createElement('a');
+      link.href = 'https://www.instagram.com/jadikan/';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = handle;
+      note.appendChild(link);
+      if (after) note.appendChild(document.createTextNode(after));
+    } else {
+      note.textContent = noteText;
+    }
+  }
 
   el.classList.add('open');
 }
