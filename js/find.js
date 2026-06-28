@@ -7,7 +7,7 @@ const _findCopy = (key, fallback = '') => (window.u3dqCopyText ? window.u3dqCopy
 
 function _getUniqueDurationFromLastActivationSec(treasure) {
   if (!treasure) return 0;
-  const anchorIso = treasure.activated_at || treasure.placed_at;
+  const anchorIso = treasure.activated_at;
   if (!anchorIso) return 0;
   const anchor = new Date(anchorIso).getTime();
   if (!Number.isFinite(anchor)) return 0;
