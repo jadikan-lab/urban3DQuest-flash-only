@@ -116,6 +116,16 @@ function _getFlashCollectionStats() {
   return { total, found, remaining };
 }
 
+function _getGlobalFlashCollectionStats() {
+  const tracked = Array.isArray(treasures)
+    ? treasures.filter(t => t && t.type === 'unique' && !t.solo_hidden)
+    : [];
+  const total = tracked.length;
+  const found = tracked.filter(t => t.found_by && t.found_by.length > 0).length;
+  const remaining = Math.max(0, total - found);
+  return { total, found, remaining };
+}
+
 function openPointsCalcModal() {
   const box = document.getElementById('pointsCalcModal');
   if (!box) return;
@@ -144,7 +154,7 @@ function updateCollectionProgress() {
   const guideTitle = document.getElementById('modeGuideTitle');
   const guideText = document.getElementById('modeGuideText');
   if (!guideTitle || !guideText) return;
-  const stats = _getFlashCollectionStats();
+  const stats = _getGlobalFlashCollectionStats();
   guideTitle.textContent = _uiCopy('GUIDE_FLASH_TITRE', '');
   const tpl = _uiCopy('GUIDE_PROGRESS_TEMPLATE', '{R} miniatures restantes a cueillir ({F}/{T})');
   guideText.textContent = tpl

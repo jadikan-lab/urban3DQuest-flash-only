@@ -182,7 +182,7 @@ function updateModeUI() {
       updateCollectionProgress();
     } else {
       guideTitle.textContent = copy('GUIDE_FLASH_TITRE', 'Progression');
-      guideText.textContent = copy('GUIDE_PROGRESS_TEMPLATE', '{R} restantes · {F}/{T} cueillies')
+      guideText.textContent = copy('GUIDE_PROGRESS_TEMPLATE', '{R} miniatures restantes a cueillir ({F}/{T})')
         .replace('{R}', '0')
         .replace('{F}', '0')
         .replace('{T}', '0');

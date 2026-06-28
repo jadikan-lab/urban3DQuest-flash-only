@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## v4.0.6 - 2026-06-28
+- Flash banner: show global remaining count as installed minus globally found captures.
+- Release hygiene: bump asset and game versions to force fresh client cache on deploy.
+
 ## v3.14.25 - 2026-05-30
 - Prod cache consistency: add `version.json` runtime manifest and normalize `cachebust` URL parameter to the active asset version.
 - Version safety: add minimum supported app version gate (`minSupportedVersion` / `minAppVersion` in `config`) with blocking fullscreen prompt.
