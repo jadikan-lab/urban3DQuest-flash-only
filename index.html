@@ -257,6 +257,16 @@
 <!-- ── Welcome return toast ── -->
 <div id="welcomeToast"></div>
 
+<div id="introVideoOverlay" aria-hidden="true">
+  <div class="intro-video-shell">
+    <video id="introVideoEl" preload="metadata" autoplay muted playsinline webkit-playsinline>
+      <source src="media/stop-mo-polaroid.mp4" type="video/mp4">
+      <source src="stop%20mo%20polaroid.mp4" type="video/mp4">
+    </video>
+    <button id="introVideoSkipBtn" type="button" onclick="closeIntroVideo(true)">Passer</button>
+  </div>
+</div>
+
 <div id="pauseScreen">
   <div class="qc-trophy">⏸</div>
   <h2>Jeu en pause</h2>
