@@ -4,6 +4,7 @@ let accessGateRequired = false;
 let accessGateUnlocked = false;
 let prelaunchEnabled = false;
 let prelaunchLaunchAt = null;
+let prelaunchTitle = '';
 let prelaunchMessage = '';
 let prelaunchImageUrl = '';
 let prelaunchTimerHandle = null;
@@ -100,7 +101,7 @@ async function loadLandingAccessGateConfig() {
     const { data, error } = await db
       .from('config')
       .select('key,value')
-      .in('key', ['gameCode', 'prelaunchEnabled', 'launchAt', 'prelaunchMessage', 'prelaunchImageUrl']);
+      .in('key', ['gameCode', 'prelaunchEnabled', 'launchAt', 'prelaunchTitle', 'prelaunchMessage', 'prelaunchImageUrl']);
     if (error || !data) return;
 
     const cfg = Object.fromEntries(data.map(r => [r.key, r.value]));
@@ -118,6 +119,7 @@ async function loadLandingAccessGateConfig() {
     }
 
     prelaunchEnabled = String(cfg.prelaunchEnabled || '') === 'true';
+    prelaunchTitle = String(cfg.prelaunchTitle || '').trim();
     prelaunchMessage = String(cfg.prelaunchMessage || '').trim();
     prelaunchImageUrl = String(cfg.prelaunchImageUrl || '').trim();
     prelaunchLaunchAt = null;
@@ -163,7 +165,7 @@ function openPrelaunchScreen() {
   const fallback = document.getElementById('prelaunchFallbackIcon');
   if (!screen || !timer) return;
 
-  if (title) title.textContent = 'Pré-lancement';
+  if (title) title.textContent = prelaunchTitle || 'Arles 3D Quest 2026';
   if (msg) msg.textContent = prelaunchMessage || 'Le jeu n\'est pas encore ouvert. Ton compte est prêt.';
   if (hero && fallback) {
     if (isAllowedPrelaunchImageUrl(prelaunchImageUrl)) {
