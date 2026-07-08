@@ -285,7 +285,10 @@ window.addEventListener('load', async () => {
 
   const params    = new URLSearchParams(location.search);
   const foundId   = params.get('found');
+  const checkinId = params.get('checkin') || '';
+  const checkin   = !!checkinId;
   if (foundId) logQROpenTelemetry(foundId, 'found');
+  if (checkin) logQROpenTelemetry(checkinId, 'checkin');
 
   // Returning user: verify session token then skip landing.
   // If access gate is enabled, keep landing visible until gate is unlocked.
