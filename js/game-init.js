@@ -1,70 +1,6 @@
 
 // ── Init game ────────────────────────────────────────
 const _gameCopy = (key, fallback = '') => (window.u3dqCopyText ? window.u3dqCopyText(key, fallback) : fallback);
-const INTRO_VIDEO_STORAGE_KEY = 'u3dq_intro_video_seen_v1';
-let introVideoAutoCloseTimer = null;
-
-function _shouldShowIntroVideo() {
-  if (!myPseudo) return false;
-  if ((myFoundCount || 0) > 0) return false;
-  return localStorage.getItem(INTRO_VIDEO_STORAGE_KEY) !== '1';
-}
-
-function _markIntroVideoSeen() {
-  localStorage.setItem(INTRO_VIDEO_STORAGE_KEY, '1');
-}
-
-function closeIntroVideo(markSeen = false) {
-  const overlay = document.getElementById('introVideoOverlay');
-  const video = document.getElementById('introVideoEl');
-  if (introVideoAutoCloseTimer) {
-    clearTimeout(introVideoAutoCloseTimer);
-    introVideoAutoCloseTimer = null;
-  }
-  if (markSeen) _markIntroVideoSeen();
-  if (video) {
-    try {
-      video.pause();
-      video.currentTime = 0;
-    } catch {}
-  }
-  if (overlay) {
-    overlay.classList.remove('open');
-    overlay.setAttribute('aria-hidden', 'true');
-  }
-}
-
-async function maybePlayIntroVideo() {
-  if (!_shouldShowIntroVideo()) return false;
-
-  const overlay = document.getElementById('introVideoOverlay');
-  const video = document.getElementById('introVideoEl');
-  if (!overlay || !video) {
-    _markIntroVideoSeen();
-    return false;
-  }
-
-  const closeAndMark = () => closeIntroVideo(true);
-  const closeSilently = () => closeIntroVideo(false);
-  video.onended = closeAndMark;
-  video.onerror = closeSilently;
-  video.onloadeddata = null;
-
-  overlay.classList.add('open');
-  overlay.setAttribute('aria-hidden', 'false');
-  introVideoAutoCloseTimer = setTimeout(closeAndMark, 3500);
-
-  try {
-    const playPromise = video.play();
-    if (playPromise && typeof playPromise.then === 'function') {
-      await playPromise;
-    }
-    return true;
-  } catch {
-    closeSilently();
-    return false;
-  }
-}
 
 async function initGame(pendingFoundId) {
   // Flash-only fork: force unique mode every time.
@@ -170,8 +106,7 @@ async function initGame(pendingFoundId) {
     await processFindById(pendingFoundId);
   }
 
-  const introShown = await maybePlayIntroVideo();
-  if (!introShown) maybeOpenQuickTutorial();
+  maybeOpenQuickTutorial();
   // Welcome back toast for returning players
   if (myPseudo && myFoundCount > 0 && !sessionStorage.getItem('u3dq_welcome_seen')) {
     const remaining = treasures.filter(t => t.type === 'unique' && !t.solo_hidden && !(t.found_by && t.found_by.length > 0)).length;

@@ -29,10 +29,6 @@ function logQROpenTelemetry(treasureId, scanKind = 'found') {
   if (!id || !db || typeof db.rpc !== 'function') return;
 
   const kind = scanKind === 'checkin' ? 'checkin' : 'found';
-  const dedupeKey = `u3dq_qr_open_logged_${kind}_${id}`;
-  if (sessionStorage.getItem(dedupeKey) === '1') return;
-  sessionStorage.setItem(dedupeKey, '1');
-
   db.rpc('log_qr_open', {
     p_treasure_id: id,
     p_pseudo: myPseudo || null,
