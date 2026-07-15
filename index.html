@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,viewport-fit=cover">
   <title>Urban3DQuest Flash · Jadikan</title>
   <meta name="theme-color" content="#f4f1ec">
+  <script>
+    (function () {
+      var host = (location.hostname || '').toLowerCase();
+      if (host === 'urban3dquest.fr' || host === 'www.urban3dquest.fr') {
+        var target = 'https://jadikan-lab.github.io/urban3DQuest/' + (location.search || '') + (location.hash || '');
+        location.replace(target);
+      }
+    })();
+  </script>
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
