@@ -71,6 +71,30 @@ function _formatTreasureForScanFeedback(id) {
   return _formatUniqueTreasureRef(t);
 }
 
+function _resolveScannedTreasureAlias(scannedId) {
+  if (!scannedId) return scannedId;
+  if (treasures.some(x => x.id === scannedId)) return scannedId;
+
+  const norm = String(scannedId).trim().toLowerCase();
+  const exact = treasures.find(x => String(x.id || '').trim().toLowerCase() === norm);
+  if (exact) return exact.id;
+
+  const fixedLike = /^fix[-_ ]?\d{1,6}$/i.test(norm) || /^\d{1,6}$/.test(norm);
+  if (!fixedLike) return scannedId;
+
+  const scannedNum = _extractLastNumber(norm);
+  if (scannedNum === null) return scannedId;
+
+  const fixedMatches = treasures.filter(t => {
+    if (!t || t.type !== 'fixed') return false;
+    const treasureNum = _extractLastNumber(t.id) ?? _extractLastNumber(t.label);
+    return treasureNum !== null && treasureNum === scannedNum;
+  });
+  if (fixedMatches.length === 1) return fixedMatches[0].id;
+
+  return scannedId;
+}
+
 function _extractScannedTreasureId(raw) {
   const txt = String(raw || '').trim();
   if (!txt) return null;
@@ -100,6 +124,8 @@ function _extractScannedTreasureId(raw) {
   const legacyKeyed = txt.match(/^(?:found)\s*[:=]\s*(.+)$/i);
   if (legacyKeyed && legacyKeyed[1]) return legacyKeyed[1].trim();
 
+  if (/^(?:fix|solo|qr|flash)[-_ ]?\d{1,6}$/i.test(txt)) return txt;
+
   if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(txt)) {
     return txt;
   }
@@ -123,6 +149,23 @@ function _resolveExpectedUniqueAlias(scannedId, expectedId) {
   const expectedNum = _extractLastNumber(expected.id)
     ?? _extractLastNumber(expected.label)
     ?? _extractLastNumber(expectedRef);
+  if (scannedNum !== null && expectedNum !== null && scannedNum === expectedNum) return expectedId;
+
+  return scannedId;
+}
+
+function _resolveExpectedFixedAlias(scannedId, expectedId) {
+  if (!scannedId || !expectedId || scannedId === expectedId) return scannedId;
+  const expected = treasures.find(x => x.id === expectedId);
+  if (!expected || expected.type !== 'fixed') return scannedId;
+
+  const norm = String(scannedId).trim().toLowerCase();
+  if (norm === '1' || norm === 'checkin' || norm === 'legacy') return expectedId;
+
+  if (treasures.some(x => x.id === scannedId)) return scannedId;
+
+  const scannedNum = _extractLastNumber(norm);
+  const expectedNum = _extractLastNumber(expected.id) ?? _extractLastNumber(expected.label);
   if (scannedNum !== null && expectedNum !== null && scannedNum === expectedNum) return expectedId;
 
   return scannedId;
@@ -452,7 +495,9 @@ async function _qrHandleResult(raw) {
     _setRetryPhotoVisible(true);
     return;
   }
-  let scannedId = _resolveExpectedUniqueAlias(parsedId, qrExpectedId);
+  let scannedId = _resolveScannedTreasureAlias(parsedId);
+  scannedId = _resolveExpectedUniqueAlias(scannedId, qrExpectedId);
+  scannedId = _resolveExpectedFixedAlias(scannedId, qrExpectedId);
 
   if (qrExpectedId && scannedId !== qrExpectedId) {
     const expectedLabel = _formatTreasureForScanFeedback(qrExpectedId);
