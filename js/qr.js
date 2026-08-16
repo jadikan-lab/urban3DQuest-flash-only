@@ -260,11 +260,24 @@ function openQRScanner(beaconId) {
         questSpan.textContent = 'Photo du QR';
         questSpan.style.display = 'block';
       }
-      status.textContent = _qrCopy('QR_STATUS_GENERIC_MANUAL', 'Prends la photo du QR d\'une balise fixe pour l\'ajouter à ta collection.');
+      status.textContent = _qrCopy('QR_STATUS_FIXED', 'Tu as trouvé la balise, prends une photo du QR code pour continuer le jeu.');
       targetEl.style.display = 'block';
     }
   }
   document.getElementById('qrOverlay').classList.add('open');
+
+  // Start live scanning automatically when overlay opens.
+  // If camera is blocked, startLiveQRScan already falls back to clear error + photo path.
+  startLiveQRScan().catch(() => {
+    const statusEl = document.getElementById('qrStatus');
+    if (statusEl) {
+      statusEl.textContent = _qrCopy('QR_STATUS_CAMERA_BLOCKED', '⚠️ Caméra bloquée. Autorise la caméra puis utilise la photo de secours.');
+      statusEl.className = 'qr-err';
+    }
+    const tips = document.getElementById('qrTips');
+    if (tips) tips.style.display = 'block';
+  });
+
   if (!_qrHistoryPushed) {
     history.pushState({ ...(history.state || {}), _u3dqQrOverlay: true }, '', location.href);
     _qrHistoryPushed = true;
